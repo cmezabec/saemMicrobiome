@@ -1,14 +1,14 @@
-#### Implementacion limpia de SAEM-ZIBBMR ####
+#### Clean SAEM-ZIBBMR implementation ####
 
-#### Utilidades internas ####
+#### Internal utilities ####
 #### (.saem_check_packages, .saem_diag*, .saem_covariate_matrix, ####
-####  .saem_replicate_design, .saem_linear_prob viven en R/utils.R, ####
-####  compartidas con ZIBR) ####
+####  .saem_replicate_design, .saem_linear_prob live in R/utils.R, ####
+####  shared with ZIBR) ####
 
 
-#### Log-verosimilitudes condicionales usadas en el paso M ####
-#### (.saem_neg_loglik_zero, la parte de inflacion de ceros, vive en ####
-####  R/utils.R, compartida con ZIBR) ####
+#### Conditional log-likelihoods used in the M-step ####
+#### (.saem_neg_loglik_zero, the zero-inflation part, lives in ####
+####  R/utils.R, shared with ZIBR) ####
 
 .zibbmr_neg_loglik_beta_binomial <- function(par, psi_chain, beta_random,
                                              z_design_chain, id_chain,
@@ -49,7 +49,7 @@
 }
 
 
-#### Importance sampling para log-verosimilitud marginal ####
+#### Importance sampling for the marginal log-likelihood ####
 
 .zibbmr_loglik_importance <- function(mu, G, phi, zi, y, s, id,
                                       x_design, z_design, n_alpha, n_beta,
@@ -61,10 +61,10 @@
   }
 
   G_inv <- .saem_diag_inverse(G)
-  # prod(diag(G)) es el determinante solo si G es diagonal. Como el paso M
-  # estima la matriz completa, hay que usar det(): de lo contrario la densidad
-  # normal de los efectos aleatorios queda mal normalizada y la verosimilitud
-  # marginal (y con ella el LRT) sale sesgada cuando la covarianza no es cero.
+  # prod(diag(G)) is the determinant only if G is diagonal. Since the M-step
+  # estimates the full matrix, we must use det(): otherwise the normal density
+  # of the random effects is mis-normalized and the marginal likelihood (and
+  # with it the LRT) comes out biased when the covariance is not zero.
   G_det <- det(as.matrix(G))
 
   psi_array <- array(rep(psi_mean, n_samples), dim = c(dim(psi_mean), n_samples))
@@ -143,7 +143,7 @@
 }
 
 
-#### Gradiente y Hessiano de la log-verosimilitud completa ####
+#### Gradient and Hessian of the complete log-likelihood ####
 
 .zibbmr_complete_grad <- function(mu, G, phi, zi, psi_chain,
                                   random_index, alpha_random, beta_random,
@@ -306,72 +306,69 @@
 }
 
 
-#### Ajuste principal SAEM-ZIBBMR ####
+#### Main SAEM-ZIBBMR fit ####
 
-#' Ajustar un modelo ZIBBMR (zero-inflated beta-binomial mixed regression) via SAEM
+#' Fit a ZIBBMR (zero-inflated beta-binomial mixed regression) model via SAEM
 #'
-#' Estima por Stochastic Approximation EM (SAEM) un modelo mixto
-#' beta-binomial con inflacion de ceros para datos longitudinales de conteo
-#' con profundidad de secuenciacion conocida (`S`), siguiendo el metodo
-#' descrito en Barrera (ZIBBMR: "Stochastic EM Estimation and Inference in
-#' Zero-Inflated Beta-Binomial Mixed Models for Longitudinal Count Data"). Es
-#' el analogo de [fit_zibr()] para conteos: en vez de modelar una proporcion
-#' observada directamente, modela el numero de lecturas `y` de un taxon sobre
-#' un total `S` (profundidad de secuenciacion de la muestra) con una
-#' verosimilitud beta-binomial.
+#' Estimates, by Stochastic Approximation EM (SAEM), a zero-inflated
+#' beta-binomial mixed model for longitudinal count data with known sequencing
+#' depth (`S`), following the method described in Barrera (ZIBBMR: "Stochastic
+#' EM Estimation and Inference in Zero-Inflated Beta-Binomial Mixed Models for
+#' Longitudinal Count Data"). It is the count analogue of [fit_zibr()]: instead
+#' of modelling an observed proportion directly, it models the read count `y`
+#' of a taxon out of a total `S` (the sample's sequencing depth) with a
+#' beta-binomial likelihood.
 #'
-#' @param y Vector de conteos (numero de lecturas del taxon), `0 <= y <= S`.
-#' @param S Vector con el total de lecturas (profundidad de secuenciacion) de
-#'   cada observacion, misma longitud que `y`.
-#' @param id Vector (o factor) que identifica al sujeto de cada observacion.
-#' @param X Matriz o data frame de covariables para la parte de inflacion de
-#'   ceros (parte logistica). `NULL` si `zi = FALSE`.
-#' @param Z Matriz o data frame de covariables para la parte beta-binomial
-#'   (magnitud condicional). `NULL` equivale a solo intercepto.
-#' @param zi Logico. Si `TRUE` (por defecto) ajusta la parte de inflacion de
-#'   ceros.
-#' @param phi_start Valor inicial del parametro de dispersion `phi`.
-#' @param alpha_start Vector de valores iniciales para los coeficientes de la
-#'   parte logistica. Requerido si `zi = TRUE`.
-#' @param beta_start Vector de valores iniciales para los coeficientes de la
-#'   parte beta-binomial.
-#' @param n_iter Numero de iteraciones del algoritmo SAEM.
-#' @param n_chains Numero de cadenas MCMC paralelas usadas en el S-step.
-#' @param seed Semilla aleatoria opcional.
-#' @param alpha_random Vector logico que indica que coeficientes de la parte
-#'   logistica son efectos aleatorios (por defecto, solo el intercepto).
-#' @param beta_random Vector logico que indica que coeficientes de la parte
-#'   beta-binomial son efectos aleatorios (por defecto, solo el intercepto).
-#' @param n_is Numero de muestras de importance sampling para la
-#'   log-verosimilitud marginal.
-#' @param compute_fim Logico. Si `TRUE`, calcula la matriz de informacion de
-#'   Fisher estocastica (necesaria para `vcov()`/`se()`).
-#' @param cov_random Estructura de la matriz de covarianza de los efectos
-#'   aleatorios. `"diag"` (por defecto) los trata como independientes entre la
-#'   parte de inflacion de ceros y la parte beta-binomial: es la especificacion
-#'   del articulo y la unica que las alternativas (`glmmTMB`, `gamlss`) tambien
-#'   pueden ajustar. `"unstructured"` estima ademas la covarianza entre ambos.
+#' @param y Vector of counts (number of reads of the taxon), `0 <= y <= S`.
+#' @param S Vector with the total reads (sequencing depth) of each observation,
+#'   same length as `y`.
+#' @param id Vector (or factor) identifying the subject of each observation.
+#' @param X Matrix or data frame of covariates for the zero-inflation part
+#'   (logistic part). `NULL` if `zi = FALSE`.
+#' @param Z Matrix or data frame of covariates for the beta-binomial part
+#'   (conditional magnitude). `NULL` is equivalent to intercept only.
+#' @param zi Logical. If `TRUE` (default) fits the zero-inflation part.
+#' @param phi_start Starting value for the dispersion parameter `phi`.
+#' @param alpha_start Vector of starting values for the coefficients of the
+#'   logistic part. Required if `zi = TRUE`.
+#' @param beta_start Vector of starting values for the coefficients of the
+#'   beta-binomial part.
+#' @param n_iter Number of iterations of the SAEM algorithm.
+#' @param n_chains Number of parallel MCMC chains used in the S-step.
+#' @param seed Optional random seed.
+#' @param alpha_random Logical vector indicating which coefficients of the
+#'   logistic part are random effects (by default, only the intercept).
+#' @param beta_random Logical vector indicating which coefficients of the
+#'   beta-binomial part are random effects (by default, only the intercept).
+#' @param n_is Number of importance-sampling draws for the marginal
+#'   log-likelihood.
+#' @param compute_fim Logical. If `TRUE`, computes the stochastic Fisher
+#'   information matrix (needed for `vcov()`/`se()`).
+#' @param cov_random Structure of the random-effect covariance matrix. `"diag"`
+#'   (default) treats them as independent between the zero-inflation part and
+#'   the beta-binomial part: it is the specification of the paper and the only
+#'   one that the alternatives (`glmmTMB`, `gamlss`) can also fit.
+#'   `"unstructured"` additionally estimates the covariance between the two.
 #'
-#'   Conviene usar `"unstructured"` solo con bastante informacion: con pocos
-#'   sujetos u observaciones por sujeto la matriz sin restricciones degenera
-#'   (la correlacion se va a \eqn{\pm 1} y una de las varianzas colapsa). Como
-#'   referencia, con 40 sujetos y 4 observaciones cada uno se ha observado
-#'   \eqn{\hat\rho = -0.92} sobre datos generados con \eqn{\rho = 0}.
+#'   `"unstructured"` should only be used with plenty of information: with few
+#'   subjects or observations per subject the unrestricted matrix degenerates
+#'   (the correlation goes to \eqn{\pm 1} and one of the variances collapses).
+#'   As a reference, with 40 subjects and 4 observations each, an estimate of
+#'   \eqn{\hat\rho = -0.92} has been observed on data generated with
+#'   \eqn{\rho = 0}.
 #'
-#'   Ojo: la matriz de informacion de Fisher esta derivada para el caso
-#'   diagonal, asi que con `"unstructured"` los errores estandar son
-#'   aproximados y no hay error estandar para la correlacion. Para contrastar
-#'   \eqn{H_0:\rho=0} conviene usar el test de razon de verosimilitud sobre
-#'   `logLik()` en vez de un test de Wald.
+#'   Note: the Fisher information matrix is derived for the diagonal case, so
+#'   with `"unstructured"` the standard errors are approximate and there is no
+#'   standard error for the correlation. To test \eqn{H_0:\rho=0} it is better
+#'   to use the likelihood-ratio test on `logLik()` rather than a Wald test.
 #'
-#' @return Un objeto de clase `zibbmr_saem` (y `SAEM_ZIBBMR_result` por
-#'   compatibilidad), con los mismos elementos que [fit_zibr()] (`mu`, `G`,
-#'   `phi`, `loglik`, `trace`, `fisher_stoch`, etc.). Tiene metodos
-#'   [print()], [plot()], [stats::logLik()], [stats::coef()],
-#'   [stats::vcov()] y [se()].
+#' @return An object of class `zibbmr_saem` (and `SAEM_ZIBBMR_result` for
+#'   compatibility), with the same elements as [fit_zibr()] (`mu`, `G`, `phi`,
+#'   `loglik`, `trace`, `fisher_stoch`, etc.). It has [print()], [plot()],
+#'   [stats::logLik()], [stats::coef()], [stats::vcov()] and [se()] methods.
 #'
 #' @seealso [fit_zibbmr_taxon()], [simulate_zibbmr_data()], [lrt_zibbmr()],
-#'   [fit_zibr()] para la version en proporciones.
+#'   [fit_zibr()] for the proportion version.
 #'
 #' @examples
 #' \donttest{
@@ -401,7 +398,7 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
                        n_is = 500, compute_fim = TRUE,
                        cov_random = c("diag", "unstructured")) {
   .saem_check_packages(inference = compute_fim)
-  cov_random <- .saem_valida_estructura(cov_random)
+  cov_random <- .saem_validate_structure(cov_random)
 
   if (!is.null(seed)) {
     set.seed(seed)
@@ -411,11 +408,11 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
   S <- as.numeric(S)
 
   if (length(y) != length(S) || length(y) != length(id)) {
-    stop("y, S e id deben tener la misma longitud.", call. = FALSE)
+    stop("y, S and id must have the same length.", call. = FALSE)
   }
 
   if (any(y < 0) || any(S < 0) || any(y > S)) {
-    stop("Los conteos deben satisfacer 0 <= y <= S.", call. = FALSE)
+    stop("Counts must satisfy 0 <= y <= S.", call. = FALSE)
   }
 
   n_total <- length(y)
@@ -427,12 +424,12 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
     n_alpha <- ncol(x_design)
 
     if (length(alpha_start) != n_alpha) {
-      stop("alpha_start debe tener longitud igual a 1 + numero de columnas de X.", call. = FALSE)
+      stop("alpha_start must have length equal to 1 + number of columns of X.", call. = FALSE)
     }
 
     alpha_random <- if (is.null(alpha_random)) c(TRUE, rep(FALSE, n_alpha - 1)) else alpha_random
     if (length(alpha_random) != n_alpha) {
-      stop("alpha_random debe tener longitud igual a length(alpha_start).", call. = FALSE)
+      stop("alpha_random must have length equal to length(alpha_start).", call. = FALSE)
     }
 
     x_design_chain <- .saem_replicate_design(x_design, n_chains)
@@ -440,7 +437,7 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
     n_alpha_random <- sum(alpha_random)
   } else {
     if (!is.null(X) || !is.null(alpha_start)) {
-      stop("No entregue X ni alpha_start cuando zi = FALSE.", call. = FALSE)
+      stop("Do not supply X or alpha_start when zi = FALSE.", call. = FALSE)
     }
 
     y <- ifelse(y == 0, 1e-6, y)
@@ -457,12 +454,12 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
   n_beta <- ncol(z_design)
 
   if (length(beta_start) != n_beta) {
-    stop("beta_start debe tener longitud igual a 1 + numero de columnas de Z.", call. = FALSE)
+    stop("beta_start must have length equal to 1 + number of columns of Z.", call. = FALSE)
   }
 
   beta_random <- if (is.null(beta_random)) c(TRUE, rep(FALSE, n_beta - 1)) else beta_random
   if (length(beta_random) != n_beta) {
-    stop("beta_random debe tener longitud igual a length(beta_start).", call. = FALSE)
+    stop("beta_random must have length equal to length(beta_start).", call. = FALSE)
   }
 
   beta_labels <- colnames(z_design)
@@ -479,10 +476,10 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
   id_rep <- rep(subject_id, n_chains)
   id_chain <- id_rep + n_subjects * (rep(seq_len(n_chains), each = n_total) - 1)
 
-  # Grupo sujeto para colapsar las filas (sujeto, cadena) de psi_chain sobre
-  # las cadenas; cada sujeto aparece exactamente n_chains veces, asi que la
-  # media por sujeto es rowsum(.)/n_chains (equivalente a tapply(., mean) pero
-  # sin reconstruir el factor en cada iteracion).
+  # Subject group to collapse the (subject, chain) rows of psi_chain over the
+  # chains; each subject appears exactly n_chains times, so the per-subject
+  # mean is rowsum(.)/n_chains (equivalent to tapply(., mean) but without
+  # rebuilding the factor at each iteration).
   subject_group_chain <- rep(seq_len(n_subjects), n_chains)
 
   is_positive_chain <- rep(is_positive, n_chains)
@@ -492,7 +489,7 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
 
   mu <- c(alpha_start, beta_start)
   G_full <- 0.5 * .saem_diag(abs(mu))
-  G <- .saem_impone_estructura(G_full[random_index, random_index, drop = FALSE], cov_random)
+  G <- .saem_impose_structure(G_full[random_index, random_index, drop = FALSE], cov_random)
   phi <- phi_start
 
   psi_chain <- matrix(
@@ -757,9 +754,9 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
     if (iter > 10) {
       mu <- stat1 / n_subjects
       G_full <- stat2 / n_subjects - (stat1 %*% t(stat1)) / n_subjects^2
-      G <- .saem_impone_estructura(G_full[random_index, random_index, drop = FALSE], cov_random)
-      # El kernel de propuesta usa G_full, asi que tiene que respetar la misma
-      # restriccion; si no, propone en direcciones que el modelo no admite.
+      G <- .saem_impose_structure(G_full[random_index, random_index, drop = FALSE], cov_random)
+      # The proposal kernel uses G_full, so it must respect the same
+      # restriction; otherwise it proposes in directions the model does not allow.
       G_full[random_index, random_index] <- G
 
       beta <- mu[n_alpha + seq_len(n_beta)]
@@ -931,9 +928,9 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
     random_index = random_index,
     fisher_stoch = fisher_stoch,
     nobs = n_total,
-    # Datos originales, para poder calcular predicciones y residuos en plot().
-    # No afectan la estimacion; solo se guardan para los graficos. Incluye S
-    # (total de lecturas por muestra), que ZIBBMR necesita para las predicciones.
+    # Original data, to be able to compute predictions and residuals in plot().
+    # They do not affect estimation; they are only stored for the plots. Includes
+    # S (total reads per sample), which ZIBBMR needs for the predictions.
     data = list(y = y, S = S, x_design = x_design, z_design = z_design,
                 subject_id = subject_id),
     call = match.call()
@@ -957,36 +954,35 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
 }
 
 
-#### Simulacion de datos ZIBBMR ####
+#### ZIBBMR data simulation ####
 
-#' Simular datos longitudinales de conteo para un modelo ZIBBMR
+#' Simulate longitudinal count data for a ZIBBMR model
 #'
-#' Genera un data frame de datos longitudinales compatibles con
-#' [fit_zibbmr()]: un conteo de lecturas `Y` sobre un total `S`, con
-#' inflacion de ceros opcional, efectos fijos y un intercepto (u otros
-#' coeficientes) aleatorios por sujeto.
+#' Generates a data frame of longitudinal data compatible with [fit_zibbmr()]:
+#' a read count `Y` out of a total `S`, with optional zero inflation, fixed
+#' effects and a per-subject random intercept (or other coefficients).
 #'
-#' @param n_subjects Numero de sujetos.
-#' @param n_time Numero de observaciones (tiempos) por sujeto.
-#' @param S Vector con el total de lecturas de cada observacion, de longitud
+#' @param n_subjects Number of subjects.
+#' @param n_time Number of observations (time points) per subject.
+#' @param S Vector with the total reads of each observation, of length
 #'   `n_subjects * n_time`.
-#' @param zi Logico. Si `TRUE` (por defecto), simula presencia/ausencia con
-#'   un modelo logistico (`X`/`alpha`) antes de simular el conteo.
-#' @param X Matriz o data frame de covariables para la parte de inflacion de
-#'   ceros. `NULL` si `zi = FALSE`.
-#' @param Z Matriz o data frame de covariables para la parte beta-binomial.
-#' @param alpha Vector de coeficientes verdaderos de la parte logistica.
-#'   Requerido si `zi = TRUE`.
-#' @param beta Vector de coeficientes verdaderos de la parte beta-binomial.
-#' @param sigma_alpha Desviacion estandar del intercepto aleatorio de la
-#'   parte logistica. Requerido si `zi = TRUE`.
-#' @param sigma_beta Desviacion estandar del intercepto aleatorio de la parte
-#'   beta-binomial.
-#' @param phi Parametro de dispersion de la distribucion beta-binomial.
-#' @param seed Semilla aleatoria opcional.
+#' @param zi Logical. If `TRUE` (default), simulates presence/absence with a
+#'   logistic model (`X`/`alpha`) before simulating the count.
+#' @param X Matrix or data frame of covariates for the zero-inflation part.
+#'   `NULL` if `zi = FALSE`.
+#' @param Z Matrix or data frame of covariates for the beta-binomial part.
+#' @param alpha Vector of true coefficients of the logistic part. Required if
+#'   `zi = TRUE`.
+#' @param beta Vector of true coefficients of the beta-binomial part.
+#' @param sigma_alpha Standard deviation of the random intercept of the
+#'   logistic part. Required if `zi = TRUE`.
+#' @param sigma_beta Standard deviation of the random intercept of the
+#'   beta-binomial part.
+#' @param phi Dispersion parameter of the beta-binomial distribution.
+#' @param seed Optional random seed.
 #'
-#' @return Un data frame con columnas `Subject`, `Time`, `Y` (conteo
-#'   simulado), `TotalCounts` (igual a `S`) y las covariables usadas.
+#' @return A data frame with columns `Subject`, `Time`, `Y` (simulated count),
+#'   `TotalCounts` (equal to `S`) and the covariates used.
 #' @seealso [fit_zibbmr()]
 #' @examples
 #' n_subjects <- 10
@@ -1014,7 +1010,7 @@ simulate_zibbmr_data <- function(n_subjects, n_time, S, zi = TRUE,
   n_total <- n_subjects * n_time
 
   if (length(S) != n_total) {
-    stop("S debe tener longitud n_subjects * n_time.", call. = FALSE)
+    stop("S must have length n_subjects * n_time.", call. = FALSE)
   }
 
   if (zi) {
@@ -1022,13 +1018,13 @@ simulate_zibbmr_data <- function(n_subjects, n_time, S, zi = TRUE,
     n_alpha <- ncol(x_design)
 
     if (length(alpha) != n_alpha) {
-      stop("alpha debe tener longitud igual a 1 + numero de columnas de X.", call. = FALSE)
+      stop("alpha must have length equal to 1 + number of columns of X.", call. = FALSE)
     }
 
     random_cols <- c(1, n_alpha + 1)
   } else {
     if (!is.null(X) || !is.null(alpha)) {
-      stop("No entregue X ni alpha cuando zi = FALSE.", call. = FALSE)
+      stop("Do not supply X or alpha when zi = FALSE.", call. = FALSE)
     }
 
     x_design <- NULL
@@ -1040,7 +1036,7 @@ simulate_zibbmr_data <- function(n_subjects, n_time, S, zi = TRUE,
   n_beta <- ncol(z_design)
 
   if (length(beta) != n_beta) {
-    stop("beta debe tener longitud igual a 1 + numero de columnas de Z.", call. = FALSE)
+    stop("beta must have length equal to 1 + number of columns of Z.", call. = FALSE)
   }
 
   id <- rep(seq_len(n_subjects), each = n_time)
@@ -1099,78 +1095,77 @@ simulate_zibbmr_data <- function(n_subjects, n_time, S, zi = TRUE,
 }
 
 
-#### Metodos basicos ####
+#### Basic methods ####
 
-#' Imprimir un ajuste ZIBBMR
+#' Print a ZIBBMR fit
 #'
-#' @param x Un objeto `zibbmr_saem`, resultado de [fit_zibbmr()].
-#' @param ... No usado, por compatibilidad con el generico [print()].
-#' @return `x`, de forma invisible.
+#' @param x A `zibbmr_saem` object, the result of [fit_zibbmr()].
+#' @param ... Unused, for compatibility with the [print()] generic.
+#' @return `x`, invisibly.
 #' @export
 print.zibbmr_saem <- function(x, ...) {
-  .saem_print(x, model_label = "SAEM-ZIBBMR", beta_label = "Parte beta-binomial")
+  .saem_print(x, model_label = "SAEM-ZIBBMR", beta_label = "Beta-binomial part")
 }
 
-#' Graficos de un ajuste ZIBBMR
+#' Plots of a ZIBBMR fit
 #'
-#' Analogo a [plot.zibr_saem()]; genera distintos graficos segun `which`:
+#' Analogous to [plot.zibr_saem()]; produces different plots depending on
+#' `which`:
 #' \describe{
-#'   \item{`"convergencia"`}{(por defecto) traza iteracion-a-iteracion de los
-#'     parametros, para revisar la convergencia del algoritmo SAEM.}
-#'   \item{`"coeficientes"`}{coeficientes estimados con su intervalo de
-#'     confianza al 95%. Requiere `compute_fim = TRUE` para mostrar los
-#'     intervalos.}
-#'   \item{`"aleatorios"`}{distribucion entre sujetos de los efectos aleatorios
-#'     estimados; la linea roja marca la media poblacional.}
-#'   \item{`"ajuste"`}{observados frente a predichos de la parte continua, en las
-#'     observaciones positivas (el conteo esperado dado presencia, `u * S`), con
-#'     la recta `y = x` de referencia.}
-#'   \item{`"residuos"`}{residuos de la parte continua (observado menos predicho
-#'     individual, en observaciones positivas): su dispersion contra el valor
-#'     predicho y su distribucion.}
+#'   \item{`"convergence"`}{(default) iteration-by-iteration trace of the
+#'     parameters, to check the convergence of the SAEM algorithm.}
+#'   \item{`"coefficients"`}{estimated coefficients with their 95% confidence
+#'     interval. Requires `compute_fim = TRUE` to show the intervals.}
+#'   \item{`"random"`}{between-subject distribution of the estimated random
+#'     effects; the red line marks the population mean.}
+#'   \item{`"fit"`}{observed vs. predicted for the continuous part, on the
+#'     positive observations (the expected count given presence, `u * S`), with
+#'     the reference line `y = x`.}
+#'   \item{`"residuals"`}{residuals of the continuous part (observed minus
+#'     individual predicted, on positive observations): their spread against
+#'     the predicted value and their distribution.}
 #' }
-#' Los graficos `"ajuste"` y `"residuos"` usan los datos originales que el
-#' ajuste guarda.
+#' The `"fit"` and `"residuals"` plots use the original data that the fit
+#' stores.
 #'
-#' @param x Un objeto `zibbmr_saem`, resultado de [fit_zibbmr()].
-#' @param which Tipo de grafico: `"convergencia"`, `"coeficientes"`,
-#'   `"aleatorios"`, `"ajuste"` o `"residuos"`.
-#' @param ... Argumentos adicionales (no usados por ahora).
-#' @return `x`, de forma invisible. Se llama por su efecto secundario de
-#'   graficar.
+#' @param x A `zibbmr_saem` object, the result of [fit_zibbmr()].
+#' @param which Type of plot: `"convergence"`, `"coefficients"`, `"random"`,
+#'   `"fit"` or `"residuals"`.
+#' @param ... Additional arguments (unused for now).
+#' @return `x`, invisibly. Called for its side effect of plotting.
 #' @export
-plot.zibbmr_saem <- function(x, which = c("convergencia", "coeficientes",
-                                          "aleatorios", "ajuste", "residuos"), ...) {
+plot.zibbmr_saem <- function(x, which = c("convergence", "coefficients",
+                                          "random", "fit", "residuals"), ...) {
   .saem_plot(x, which = match.arg(which), beta_label = "beta-binomial", ...)
 }
 
-#' Log-verosimilitud marginal de un ajuste ZIBBMR
+#' Marginal log-likelihood of a ZIBBMR fit
 #'
-#' @param object Un objeto `zibbmr_saem`, resultado de [fit_zibbmr()].
-#' @param ... No usado, por compatibilidad con el generico [stats::logLik()].
-#' @return Un objeto `logLik` con la log-verosimilitud marginal estimada por
-#'   importance sampling, con atributos `df` y `nobs`.
+#' @param object A `zibbmr_saem` object, the result of [fit_zibbmr()].
+#' @param ... Unused, for compatibility with the [stats::logLik()] generic.
+#' @return A `logLik` object with the marginal log-likelihood estimated by
+#'   importance sampling, with attributes `df` and `nobs`.
 #' @export
 logLik.zibbmr_saem <- function(object, ...) {
   .saem_logLik(object)
 }
 
-#' Coeficientes estimados de un ajuste ZIBBMR
+#' Estimated coefficients of a ZIBBMR fit
 #'
-#' @param object Un objeto `zibbmr_saem`, resultado de [fit_zibbmr()].
-#' @param ... No usado, por compatibilidad con el generico [stats::coef()].
-#' @return Vector numerico `mu` con los coeficientes de la parte logistica
-#'   seguidos de los de la parte beta-binomial.
+#' @param object A `zibbmr_saem` object, the result of [fit_zibbmr()].
+#' @param ... Unused, for compatibility with the [stats::coef()] generic.
+#' @return Numeric vector `mu` with the coefficients of the logistic part
+#'   followed by those of the beta-binomial part.
 #' @export
 coef.zibbmr_saem <- function(object, ...) {
   .saem_coef(object)
 }
 
-#' Matriz de varianza-covarianza de un ajuste ZIBBMR
+#' Variance-covariance matrix of a ZIBBMR fit
 #'
-#' @param object Un objeto `zibbmr_saem` ajustado con `compute_fim = TRUE`.
-#' @param ... No usado, por compatibilidad con el generico [stats::vcov()].
-#' @return Una matriz de varianza-covarianza.
+#' @param object A `zibbmr_saem` object fitted with `compute_fim = TRUE`.
+#' @param ... Unused, for compatibility with the [stats::vcov()] generic.
+#' @return A variance-covariance matrix.
 #' @export
 vcov.zibbmr_saem <- function(object, ...) {
   .saem_vcov(object)
@@ -1183,43 +1178,42 @@ se.zibbmr_saem <- function(object, ...) {
 }
 
 
-#### Funciones limpias para analisis por taxon ####
+#### Clean functions for per-taxon analysis ####
 
-#' Ajustar ZIBBMR para un taxon de un data frame
+#' Fit ZIBBMR for one taxon of a data frame
 #'
-#' Envoltorio de [fit_zibbmr()] pensado para trabajar directamente sobre un
-#' data frame de microbioma en formato largo con conteos por taxon y una
-#' columna de profundidad de secuenciacion total.
+#' Wrapper around [fit_zibbmr()] meant to work directly on a long-format
+#' microbiome data frame with per-taxon counts and a total sequencing-depth
+#' column.
 #'
-#' @param data Data frame con una fila por observacion, incluyendo la columna
-#'   del taxon (conteos), la columna `total`, la columna de id y las
-#'   covariables.
-#' @param taxon Nombre de la columna en `data` con el conteo del taxon a
-#'   modelar.
-#' @param covariates Vector de nombres de columnas a usar como covariables en
-#'   ambas partes del modelo. Se ignora si se entregan
-#'   `x_covariates`/`z_covariates` por separado.
-#' @param x_covariates Nombres de columnas para la parte de inflacion de
-#'   ceros (por defecto, igual a `covariates`).
-#' @param z_covariates Nombres de columnas para la parte beta-binomial (por
-#'   defecto, igual a `covariates`).
-#' @param total Nombre de la columna en `data` con el total de lecturas de
-#'   cada observacion.
-#' @param id Nombre de la columna en `data` que identifica al sujeto.
-#' @param zi Logico, ver [fit_zibbmr()].
-#' @param phi_start Valor inicial de `phi`. Si es `NULL`, se sortea con
+#' @param data Data frame with one row per observation, including the taxon
+#'   column (counts), the `total` column, the id column and the covariates.
+#' @param taxon Name of the column in `data` with the taxon count to be
+#'   modelled.
+#' @param covariates Vector of column names to use as covariates in both parts
+#'   of the model. Ignored if `x_covariates`/`z_covariates` are supplied
+#'   separately.
+#' @param x_covariates Column names for the zero-inflation part (by default,
+#'   equal to `covariates`).
+#' @param z_covariates Column names for the beta-binomial part (by default,
+#'   equal to `covariates`).
+#' @param total Name of the column in `data` with the total reads of each
+#'   observation.
+#' @param id Name of the column in `data` that identifies the subject.
+#' @param zi Logical, see [fit_zibbmr()].
+#' @param phi_start Starting value of `phi`. If `NULL`, it is drawn with
 #'   `runif(1, 10, 20)`.
-#' @param alpha_start Valores iniciales de la parte logistica. Si es `NULL`,
-#'   se sortean con `runif(., -0.1, 0.1)`.
-#' @param beta_start Valores iniciales de la parte beta-binomial. Si es
-#'   `NULL`, se sortean con `runif(., -0.1, 0.1)`.
-#' @param seed Semilla aleatoria.
-#' @param n_iter Numero de iteraciones SAEM.
-#' @param n_chains Numero de cadenas MCMC.
-#' @param compute_fim Logico, ver [fit_zibbmr()].
-#' @param ... Argumentos adicionales pasados a [fit_zibbmr()].
+#' @param alpha_start Starting values of the logistic part. If `NULL`, they are
+#'   drawn with `runif(., -0.1, 0.1)`.
+#' @param beta_start Starting values of the beta-binomial part. If `NULL`, they
+#'   are drawn with `runif(., -0.1, 0.1)`.
+#' @param seed Random seed.
+#' @param n_iter Number of SAEM iterations.
+#' @param n_chains Number of MCMC chains.
+#' @param compute_fim Logical, see [fit_zibbmr()].
+#' @param ... Additional arguments passed to [fit_zibbmr()].
 #'
-#' @return Un objeto `zibbmr_saem`, igual que [fit_zibbmr()].
+#' @return A `zibbmr_saem` object, same as [fit_zibbmr()].
 #' @seealso [fit_zibbmr()], [fit_zibbmr_taxa()]
 #' @export
 fit_zibbmr_taxon <- function(data, taxon, covariates = NULL,
@@ -1231,13 +1225,13 @@ fit_zibbmr_taxon <- function(data, taxon, covariates = NULL,
                              seed = 232, n_iter = 1000, n_chains = 5,
                              compute_fim = FALSE, ...) {
   if (!taxon %in% names(data)) {
-    stop("El taxon indicado no existe en data.", call. = FALSE)
+    stop("The specified taxon does not exist in data.", call. = FALSE)
   }
   if (!total %in% names(data)) {
-    stop("La columna total no existe en data.", call. = FALSE)
+    stop("The total column does not exist in data.", call. = FALSE)
   }
   if (!id %in% names(data)) {
-    stop("La columna id no existe en data.", call. = FALSE)
+    stop("The id column does not exist in data.", call. = FALSE)
   }
   if (is.null(x_covariates)) {
     x_covariates <- character(0)
@@ -1247,10 +1241,10 @@ fit_zibbmr_taxon <- function(data, taxon, covariates = NULL,
   }
 
   if (!all(x_covariates %in% names(data))) {
-    stop("Al menos una covariable de x_covariates no existe en data.", call. = FALSE)
+    stop("At least one covariate in x_covariates does not exist in data.", call. = FALSE)
   }
   if (!all(z_covariates %in% names(data))) {
-    stop("Al menos una covariable de z_covariates no existe en data.", call. = FALSE)
+    stop("At least one covariate in z_covariates does not exist in data.", call. = FALSE)
   }
 
   n_x_covariates <- length(x_covariates)
@@ -1291,24 +1285,24 @@ fit_zibbmr_taxon <- function(data, taxon, covariates = NULL,
   )
 }
 
-#' Ajustar ZIBBMR para varios taxones de un data frame
+#' Fit ZIBBMR for several taxa of a data frame
 #'
-#' Aplica [fit_zibbmr_taxon()] a cada elemento de `taxa`, con la misma
-#' configuracion de covariables e iteraciones para todos.
+#' Applies [fit_zibbmr_taxon()] to each element of `taxa`, with the same
+#' covariate and iteration configuration for all of them.
 #'
-#' @param data Data frame con una fila por observacion.
-#' @param taxa Vector de nombres de columnas (taxones) a ajustar.
-#' @param covariates,x_covariates,z_covariates Ver [fit_zibbmr_taxon()].
-#' @param total Nombre de la columna con el total de lecturas.
-#' @param id Nombre de la columna que identifica al sujeto.
-#' @param zi Logico, ver [fit_zibbmr()].
-#' @param seed Semilla aleatoria (se reutiliza para cada taxon).
-#' @param n_iter Numero de iteraciones SAEM.
-#' @param n_chains Numero de cadenas MCMC.
-#' @param compute_fim Logico, ver [fit_zibbmr()].
-#' @param ... Argumentos adicionales pasados a [fit_zibbmr_taxon()].
+#' @param data Data frame with one row per observation.
+#' @param taxa Vector of column names (taxa) to fit.
+#' @param covariates,x_covariates,z_covariates See [fit_zibbmr_taxon()].
+#' @param total Name of the column with the total reads.
+#' @param id Name of the column that identifies the subject.
+#' @param zi Logical, see [fit_zibbmr()].
+#' @param seed Random seed (reused for each taxon).
+#' @param n_iter Number of SAEM iterations.
+#' @param n_chains Number of MCMC chains.
+#' @param compute_fim Logical, see [fit_zibbmr()].
+#' @param ... Additional arguments passed to [fit_zibbmr_taxon()].
 #'
-#' @return Una lista de objetos `zibbmr_saem`, nombrada segun `taxa`.
+#' @return A list of `zibbmr_saem` objects, named according to `taxa`.
 #' @seealso [fit_zibbmr_taxon()]
 #' @export
 fit_zibbmr_taxa <- function(data, taxa, covariates = NULL,
@@ -1338,35 +1332,35 @@ fit_zibbmr_taxa <- function(data, taxa, covariates = NULL,
   fits
 }
 
-#' Prueba de razon de verosimilitudes entre dos ajustes ZIBBMR anidados
+#' Likelihood-ratio test between two nested ZIBBMR fits
 #'
-#' Analogo de [lrt_zibr()] para modelos ZIBBMR.
+#' Analogue of [lrt_zibr()] for ZIBBMR models.
 #'
-#' @param full Modelo completo: un objeto `zibbmr_saem` o cualquier objeto
-#'   con metodo [stats::logLik()].
-#' @param reduced Modelo reducido (anidado en `full`), mismo tipo que `full`.
-#' @param df Grados de libertad de la prueba.
+#' @param full Full model: a `zibbmr_saem` object or any object with a
+#'   [stats::logLik()] method.
+#' @param reduced Reduced model (nested in `full`), same type as `full`.
+#' @param df Degrees of freedom of the test.
 #'
-#' @return Un data frame de una fila con `LL_full`, `LL_reduced`, `LRT`, `df`
-#'   y `p_value`.
+#' @return A one-row data frame with `LL_full`, `LL_reduced`, `LRT`, `df` and
+#'   `p_value`.
 #' @seealso [lrt_zibbmr_table()], [lrt_zibr()]
 #' @export
 lrt_zibbmr <- function(full, reduced, df = 2) {
   .saem_lrt(full, reduced, df = df)
 }
 
-#' Tabla de pruebas de razon de verosimilitudes para varios taxones ZIBBMR
+#' Table of likelihood-ratio tests for several ZIBBMR taxa
 #'
-#' Analogo de [lrt_zibr_table()] para modelos ZIBBMR.
+#' Analogue of [lrt_zibr_table()] for ZIBBMR models.
 #'
-#' @param full_models Lista de modelos completos (uno por taxon).
-#' @param reduced_models Lista de modelos reducidos (uno por taxon, mismo
-#'   orden que `full_models`).
-#' @param species Vector de nombres/etiquetas para cada taxon.
-#' @param df Grados de libertad de la prueba.
-#' @param alpha Nivel de significancia usado para marcar `Detected`.
+#' @param full_models List of full models (one per taxon).
+#' @param reduced_models List of reduced models (one per taxon, same order as
+#'   `full_models`).
+#' @param species Vector of names/labels for each taxon.
+#' @param df Degrees of freedom of the test.
+#' @param alpha Significance level used to flag `Detected`.
 #'
-#' @return Un data frame con una fila por taxon, ver [lrt_zibbmr()].
+#' @return A data frame with one row per taxon, see [lrt_zibbmr()].
 #' @seealso [lrt_zibbmr()]
 #' @export
 lrt_zibbmr_table <- function(full_models, reduced_models, species = names(full_models),
@@ -1377,19 +1371,19 @@ lrt_zibbmr_table <- function(full_models, reduced_models, species = names(full_m
   )
 }
 
-#' Tabla resumen de tres comparaciones LRT tipicas para ZIBBMR
+#' Summary table of three typical LRT comparisons for ZIBBMR
 #'
-#' Analogo de [zibr_results_table()] para modelos ZIBBMR.
+#' Analogue of [zibr_results_table()] for ZIBBMR models.
 #'
-#' @param species Vector de nombres/etiquetas para cada taxon.
-#' @param mod1_full,mod1_no_preg Listas de modelos ZIBBMR para la primera
-#'   comparacion, uno por taxon.
-#' @param mod2_full,mod2_no_preg,mod2_no_inter Listas de modelos ZIBBMR para
-#'   la segunda comparacion y la prueba de interaccion, uno por taxon.
-#' @param df Grados de libertad usados en las tres pruebas.
-#' @param alpha Nivel de significancia usado para las columnas `Detec_*`.
+#' @param species Vector of names/labels for each taxon.
+#' @param mod1_full,mod1_no_preg Lists of ZIBBMR models for the first
+#'   comparison, one per taxon.
+#' @param mod2_full,mod2_no_preg,mod2_no_inter Lists of ZIBBMR models for the
+#'   second comparison and the interaction test, one per taxon.
+#' @param df Degrees of freedom used in the three tests.
+#' @param alpha Significance level used for the `Detec_*` columns.
 #'
-#' @return Un data frame con una fila por taxon.
+#' @return A data frame with one row per taxon.
 #' @seealso [zibr_results_table()]
 #' @export
 zibbmr_results_table <- function(species,
@@ -1402,30 +1396,28 @@ zibbmr_results_table <- function(species,
   )
 }
 
-#' Preparar datos tipo Romero para ZIBBMR
+#' Prepare Romero-type data for ZIBBMR
 #'
-#' Analogo de [prepare_romero_zibr()], pero conserva los conteos crudos por
-#' taxon (en vez de convertirlos a abundancia relativa), listos para usarse
-#' con [fit_zibbmr()]/[fit_zibbmr_taxon()] junto con la columna
-#' `Total.Read.Counts` como profundidad de secuenciacion.
+#' Analogue of [prepare_romero_zibr()], but keeps the raw per-taxon counts
+#' (instead of converting them to relative abundance), ready to use with
+#' [fit_zibbmr()]/[fit_zibbmr_taxon()] together with the `Total.Read.Counts`
+#' column as sequencing depth.
 #'
-#' @param romero Una lista con elementos `SampleData` y `OTU`, ver
+#' @param romero A list with elements `SampleData` and `OTU`, see
 #'   [prepare_romero_zibr()].
-#' @param taxa_out Indices de columnas de taxones a excluir explicitamente
-#'   tras el filtro por proporcion de ceros.
-#' @param zero_range Vector de largo 2 con el rango `[min, max]` de
-#'   proporcion de ceros permitido para retener un taxon (calculado sobre los
-#'   conteos crudos).
+#' @param taxa_out Indices of taxon columns to exclude explicitly after the
+#'   zero-proportion filter.
+#' @param zero_range Length-2 vector with the `[min, max]` range of zero
+#'   proportion allowed to retain a taxon (computed on the raw counts).
 #'
-#' @return Una lista con `data` (covariables + conteos de los taxones
-#'   retenidos), `taxa`, `covariates`, `counts`, `taxa_removed` y
-#'   `zero_range`.
-#' @seealso [prepare_romero_zibr()] para la version en proporciones (ZIBR).
+#' @return A list with `data` (covariates + counts of the retained taxa),
+#'   `taxa`, `covariates`, `counts`, `taxa_removed` and `zero_range`.
+#' @seealso [prepare_romero_zibr()] for the proportion version (ZIBR).
 #' @export
 prepare_romero_zibbmr <- function(romero, taxa_out = c(31, 49, 50, 60),
                                   zero_range = c(0.1, 0.9)) {
   if (!all(c("SampleData", "OTU") %in% names(romero))) {
-    stop("romero debe contener los elementos SampleData y OTU.", call. = FALSE)
+    stop("romero must contain the elements SampleData and OTU.", call. = FALSE)
   }
 
   sample_data <- romero$SampleData
@@ -1482,23 +1474,23 @@ prepare_romero_zibbmr <- function(romero, taxa_out = c(31, 49, 50, 60),
 }
 
 
-#### Alias de compatibilidad con nombres del codigo original ####
+#### Compatibility aliases with the original code's names ####
 
-#' Alias historico de fit_zibbmr con la firma del codigo original de Barrera
+#' Historical alias of fit_zibbmr with the signature of Barrera's original code
 #'
-#' Envoltorio de compatibilidad hacia atras que expone [fit_zibbmr()] con los
-#' mismos nombres de argumento que el script original `saem_zibbmr()`
-#' (`jbarrera232/saem-zibbmr`). Se mantiene para no romper analisis
-#' existentes; el codigo nuevo deberia usar [fit_zibbmr()] directamente.
+#' Backward-compatibility wrapper that exposes [fit_zibbmr()] with the same
+#' argument names as the original `saem_zibbmr()` script
+#' (`jbarrera232/saem-zibbmr`). Kept so as not to break existing analyses; new
+#' code should use [fit_zibbmr()] directly.
 #'
-#' @param Y,X,Z,S,index,zi,v0,a0,b0,seed,iter,ncad,a.fix,b.fix Ver los
-#'   argumentos equivalentes de [fit_zibbmr()]: `Y = y`, `index = id`,
+#' @param Y,X,Z,S,index,zi,v0,a0,b0,seed,iter,ncad,a.fix,b.fix See the
+#'   equivalent arguments of [fit_zibbmr()]: `Y = y`, `index = id`,
 #'   `v0 = phi_start`, `a0 = alpha_start`, `b0 = beta_start`, `iter = n_iter`,
-#'   `ncad = n_chains`, `a.fix`/`b.fix` equivalen a `alpha_random`/
-#'   `beta_random` (`a.fix == 0` marca las posiciones aleatorias).
-#' @param compute_fim Ver [fit_zibbmr()].
+#'   `ncad = n_chains`; `a.fix`/`b.fix` correspond to `alpha_random`/
+#'   `beta_random` (`a.fix == 0` marks the random positions).
+#' @param compute_fim See [fit_zibbmr()].
 #'
-#' @return Un objeto `zibbmr_saem`, igual que [fit_zibbmr()].
+#' @return A `zibbmr_saem` object, same as [fit_zibbmr()].
 #' @seealso [fit_zibbmr()]
 #' @export
 saem_zibbmr_clean <- function(Y, X = NULL, Z = NULL, S, index, zi = TRUE,
@@ -1523,18 +1515,17 @@ saem_zibbmr_clean <- function(Y, X = NULL, Z = NULL, S, index, zi = TRUE,
   )
 }
 
-#' Alias historico de simulate_zibbmr_data con la firma del codigo original
+#' Historical alias of simulate_zibbmr_data with the original code's signature
 #'
-#' Envoltorio de compatibilidad hacia atras que expone
-#' [simulate_zibbmr_data()] con los nombres de argumento del script original
-#' de Barrera.
+#' Backward-compatibility wrapper that exposes [simulate_zibbmr_data()] with
+#' the argument names of Barrera's original script.
 #'
-#' @param n.ind,n.obs.ind,s.tot,zi,X,Z,alpha,beta,s1,s2,v,seed Ver los
-#'   argumentos equivalentes de [simulate_zibbmr_data()]: `n.ind =
-#'   n_subjects`, `n.obs.ind = n_time`, `s.tot = S`, `s1 = sigma_alpha`,
-#'   `s2 = sigma_beta`, `v = phi`.
+#' @param n.ind,n.obs.ind,s.tot,zi,X,Z,alpha,beta,s1,s2,v,seed See the
+#'   equivalent arguments of [simulate_zibbmr_data()]: `n.ind = n_subjects`,
+#'   `n.obs.ind = n_time`, `s.tot = S`, `s1 = sigma_alpha`, `s2 = sigma_beta`,
+#'   `v = phi`.
 #'
-#' @return Un data frame, igual que [simulate_zibbmr_data()].
+#' @return A data frame, same as [simulate_zibbmr_data()].
 #' @seealso [simulate_zibbmr_data()]
 #' @export
 sim_zibbmr_data_clean <- function(n.ind, n.obs.ind, s.tot, zi = TRUE,

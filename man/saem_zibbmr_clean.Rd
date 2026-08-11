@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibbmr.R
 \name{saem_zibbmr_clean}
 \alias{saem_zibbmr_clean}
-\title{Alias historico de fit_zibbmr con la firma del codigo original de Barrera}
+\title{Historical alias of fit_zibbmr with the signature of Barrera's original code}
 \usage{
 saem_zibbmr_clean(
   Y,
@@ -23,22 +23,22 @@ saem_zibbmr_clean(
 )
 }
 \arguments{
-\item{Y, X, Z, S, index, zi, v0, a0, b0, seed, iter, ncad, a.fix, b.fix}{Ver los
-argumentos equivalentes de \code{\link[=fit_zibbmr]{fit_zibbmr()}}: \code{Y = y}, \code{index = id},
+\item{Y, X, Z, S, index, zi, v0, a0, b0, seed, iter, ncad, a.fix, b.fix}{See the
+equivalent arguments of \code{\link[=fit_zibbmr]{fit_zibbmr()}}: \code{Y = y}, \code{index = id},
 \code{v0 = phi_start}, \code{a0 = alpha_start}, \code{b0 = beta_start}, \code{iter = n_iter},
-\code{ncad = n_chains}, \code{a.fix}/\code{b.fix} equivalen a \code{alpha_random}/
-\code{beta_random} (\code{a.fix == 0} marca las posiciones aleatorias).}
+\code{ncad = n_chains}; \code{a.fix}/\code{b.fix} correspond to \code{alpha_random}/
+\code{beta_random} (\code{a.fix == 0} marks the random positions).}
 
-\item{compute_fim}{Ver \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
+\item{compute_fim}{See \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
 }
 \value{
-Un objeto \code{zibbmr_saem}, igual que \code{\link[=fit_zibbmr]{fit_zibbmr()}}.
+A \code{zibbmr_saem} object, same as \code{\link[=fit_zibbmr]{fit_zibbmr()}}.
 }
 \description{
-Envoltorio de compatibilidad hacia atras que expone \code{\link[=fit_zibbmr]{fit_zibbmr()}} con los
-mismos nombres de argumento que el script original \code{saem_zibbmr()}
-(\code{jbarrera232/saem-zibbmr}). Se mantiene para no romper analisis
-existentes; el codigo nuevo deberia usar \code{\link[=fit_zibbmr]{fit_zibbmr()}} directamente.
+Backward-compatibility wrapper that exposes \code{\link[=fit_zibbmr]{fit_zibbmr()}} with the same
+argument names as the original \code{saem_zibbmr()} script
+(\code{jbarrera232/saem-zibbmr}). Kept so as not to break existing analyses; new
+code should use \code{\link[=fit_zibbmr]{fit_zibbmr()}} directly.
 }
 \seealso{
 \code{\link[=fit_zibbmr]{fit_zibbmr()}}

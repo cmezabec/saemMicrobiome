@@ -2,18 +2,18 @@
 % Please edit documentation in R/zibbmr.R
 \name{vcov.zibbmr_saem}
 \alias{vcov.zibbmr_saem}
-\title{Matriz de varianza-covarianza de un ajuste ZIBBMR}
+\title{Variance-covariance matrix of a ZIBBMR fit}
 \usage{
 \method{vcov}{zibbmr_saem}(object, ...)
 }
 \arguments{
-\item{object}{Un objeto \code{zibbmr_saem} ajustado con \code{compute_fim = TRUE}.}
+\item{object}{A \code{zibbmr_saem} object fitted with \code{compute_fim = TRUE}.}
 
-\item{...}{No usado, por compatibilidad con el generico \code{\link[stats:vcov]{stats::vcov()}}.}
+\item{...}{Unused, for compatibility with the \code{\link[stats:vcov]{stats::vcov()}} generic.}
 }
 \value{
-Una matriz de varianza-covarianza.
+A variance-covariance matrix.
 }
 \description{
-Matriz de varianza-covarianza de un ajuste ZIBBMR
+Variance-covariance matrix of a ZIBBMR fit
 }

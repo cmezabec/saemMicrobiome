@@ -4,7 +4,7 @@
 \alias{se}
 \alias{se.zibbmr_saem}
 \alias{se.zibr_saem}
-\title{Errores estandar de un ajuste SAEM}
+\title{Standard errors of a SAEM fit}
 \usage{
 se(object, ...)
 
@@ -13,21 +13,21 @@ se(object, ...)
 \method{se}{zibr_saem}(object, ...)
 }
 \arguments{
-\item{object}{Un objeto ajustado por \code{\link[=fit_zibr]{fit_zibr()}} o \code{\link[=fit_zibbmr]{fit_zibbmr()}} (clases
-\code{zibr_saem} o \code{zibbmr_saem}).}
+\item{object}{An object fitted by \code{\link[=fit_zibr]{fit_zibr()}} or \code{\link[=fit_zibbmr]{fit_zibbmr()}} (classes
+\code{zibr_saem} or \code{zibbmr_saem}).}
 
-\item{...}{Argumentos adicionales pasados a metodos especificos.}
+\item{...}{Additional arguments passed to specific methods.}
 }
 \value{
-Un vector numerico con los errores estandar, en el mismo orden que
-\code{coef(object)} seguido de la dispersion y las varianzas de efectos
-aleatorios.
+A numeric vector with the standard errors, in the same order as
+\code{coef(object)} followed by the dispersion and the random-effect
+variances.
 }
 \description{
-Generico que calcula los errores estandar de los parametros de un modelo
-ajustado, a partir de la matriz de informacion de Fisher estocastica
-(\code{fisher_stoch}) almacenada en el objeto de ajuste. Requiere que el modelo
-se haya ajustado con \code{compute_fim = TRUE}.
+Generic that computes the standard errors of the parameters of a fitted
+model, from the stochastic Fisher information matrix (\code{fisher_stoch})
+stored in the fit object. Requires the model to have been fitted with
+\code{compute_fim = TRUE}.
 }
 \seealso{
 \code{\link[=fit_zibr]{fit_zibr()}}, \code{\link[=fit_zibbmr]{fit_zibbmr()}}, \code{\link[stats:vcov]{stats::vcov()}}

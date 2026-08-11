@@ -2,19 +2,19 @@
 % Please edit documentation in R/zibr.R
 \name{logLik.zibr_saem}
 \alias{logLik.zibr_saem}
-\title{Log-verosimilitud marginal de un ajuste ZIBR}
+\title{Marginal log-likelihood of a ZIBR fit}
 \usage{
 \method{logLik}{zibr_saem}(object, ...)
 }
 \arguments{
-\item{object}{Un objeto \code{zibr_saem}, resultado de \code{\link[=fit_zibr]{fit_zibr()}}.}
+\item{object}{A \code{zibr_saem} object, the result of \code{\link[=fit_zibr]{fit_zibr()}}.}
 
-\item{...}{No usado, por compatibilidad con el generico \code{\link[stats:logLik]{stats::logLik()}}.}
+\item{...}{Unused, for compatibility with the \code{\link[stats:logLik]{stats::logLik()}} generic.}
 }
 \value{
-Un objeto \code{logLik} con la log-verosimilitud marginal estimada por
-importance sampling, con atributos \code{df} (grados de libertad) y \code{nobs}.
+A \code{logLik} object with the marginal log-likelihood estimated by
+importance sampling, with attributes \code{df} (degrees of freedom) and \code{nobs}.
 }
 \description{
-Log-verosimilitud marginal de un ajuste ZIBR
+Marginal log-likelihood of a ZIBR fit
 }

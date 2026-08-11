@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibbmr.R
 \name{simulate_zibbmr_data}
 \alias{simulate_zibbmr_data}
-\title{Simular datos longitudinales de conteo para un modelo ZIBBMR}
+\title{Simulate longitudinal count data for a ZIBBMR model}
 \usage{
 simulate_zibbmr_data(
   n_subjects,
@@ -20,45 +20,44 @@ simulate_zibbmr_data(
 )
 }
 \arguments{
-\item{n_subjects}{Numero de sujetos.}
+\item{n_subjects}{Number of subjects.}
 
-\item{n_time}{Numero de observaciones (tiempos) por sujeto.}
+\item{n_time}{Number of observations (time points) per subject.}
 
-\item{S}{Vector con el total de lecturas de cada observacion, de longitud
+\item{S}{Vector with the total reads of each observation, of length
 \code{n_subjects * n_time}.}
 
-\item{zi}{Logico. Si \code{TRUE} (por defecto), simula presencia/ausencia con
-un modelo logistico (\code{X}/\code{alpha}) antes de simular el conteo.}
+\item{zi}{Logical. If \code{TRUE} (default), simulates presence/absence with a
+logistic model (\code{X}/\code{alpha}) before simulating the count.}
 
-\item{X}{Matriz o data frame de covariables para la parte de inflacion de
-ceros. \code{NULL} si \code{zi = FALSE}.}
+\item{X}{Matrix or data frame of covariates for the zero-inflation part.
+\code{NULL} if \code{zi = FALSE}.}
 
-\item{Z}{Matriz o data frame de covariables para la parte beta-binomial.}
+\item{Z}{Matrix or data frame of covariates for the beta-binomial part.}
 
-\item{alpha}{Vector de coeficientes verdaderos de la parte logistica.
-Requerido si \code{zi = TRUE}.}
+\item{alpha}{Vector of true coefficients of the logistic part. Required if
+\code{zi = TRUE}.}
 
-\item{beta}{Vector de coeficientes verdaderos de la parte beta-binomial.}
+\item{beta}{Vector of true coefficients of the beta-binomial part.}
 
-\item{sigma_alpha}{Desviacion estandar del intercepto aleatorio de la
-parte logistica. Requerido si \code{zi = TRUE}.}
+\item{sigma_alpha}{Standard deviation of the random intercept of the
+logistic part. Required if \code{zi = TRUE}.}
 
-\item{sigma_beta}{Desviacion estandar del intercepto aleatorio de la parte
-beta-binomial.}
+\item{sigma_beta}{Standard deviation of the random intercept of the
+beta-binomial part.}
 
-\item{phi}{Parametro de dispersion de la distribucion beta-binomial.}
+\item{phi}{Dispersion parameter of the beta-binomial distribution.}
 
-\item{seed}{Semilla aleatoria opcional.}
+\item{seed}{Optional random seed.}
 }
 \value{
-Un data frame con columnas \code{Subject}, \code{Time}, \code{Y} (conteo
-simulado), \code{TotalCounts} (igual a \code{S}) y las covariables usadas.
+A data frame with columns \code{Subject}, \code{Time}, \code{Y} (simulated count),
+\code{TotalCounts} (equal to \code{S}) and the covariates used.
 }
 \description{
-Genera un data frame de datos longitudinales compatibles con
-\code{\link[=fit_zibbmr]{fit_zibbmr()}}: un conteo de lecturas \code{Y} sobre un total \code{S}, con
-inflacion de ceros opcional, efectos fijos y un intercepto (u otros
-coeficientes) aleatorios por sujeto.
+Generates a data frame of longitudinal data compatible with \code{\link[=fit_zibbmr]{fit_zibbmr()}}:
+a read count \code{Y} out of a total \code{S}, with optional zero inflation, fixed
+effects and a per-subject random intercept (or other coefficients).
 }
 \examples{
 n_subjects <- 10

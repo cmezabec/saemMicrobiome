@@ -1,44 +1,43 @@
-
 # saemMicrobiome
 
-`saemMicrobiome` implementa dos modelos mixtos con inflación de ceros
-para datos longitudinales de microbioma, estimados con el algoritmo
-Stochastic Approximation EM (SAEM):
+`saemMicrobiome` implements two zero-inflated mixed models for longitudinal
+microbiome data, estimated with the Stochastic Approximation EM (SAEM)
+algorithm:
 
-- **ZIBR** (zero-inflated beta regression) para proporciones o
-  abundancias relativas — ver \[`fit_zibr()`\].
-- **ZIBBMR** (zero-inflated beta-binomial mixed regression) para conteos
-  con profundidad de secuenciacion conocida — ver \[`fit_zibbmr()`\].
+- **ZIBR** (zero-inflated beta regression) for proportions or relative
+  abundances — see [`fit_zibr()`].
+- **ZIBBMR** (zero-inflated beta-binomial mixed regression) for counts with
+  known sequencing depth — see [`fit_zibbmr()`].
 
-Ambos modelos y su algoritmo de estimación fueron desarrollados
-originalmente por John Barrera:
+Both models and their estimation algorithm were originally developed by John
+Barrera:
 
 - ZIBR: <https://github.com/jbarrera232/saem-zibr>
 - ZIBBMR: <https://github.com/jbarrera232/saem-zibbmr>
 
-Este paquete organiza, documenta y testea esa implementacion para uso
-general en analisis de microbioma longitudinal.
+This package organizes, documents and tests that implementation for general
+use in longitudinal microbiome analysis.
 
-## Instalación
+## Installation
 
-``` r
+```r
 # install.packages("remotes")
 remotes::install_github("gabrielagutierrezbernal/saemMicrobiome")
 ```
 
-## Ejemplo: ZIBR (proporciones)
+## Example: ZIBR (proportions)
 
-> **Nota:** el ejemplo usa 300 sujetos, un tamaño de muestra suficiente
-> para que los estimados queden cerca de los valores verdaderos usados
-> en la simulación (`alpha = c(-0.3, 0.5)`, `beta = c(0.2, -0.4)`,
-> `phi = 15`). Con muestras más pequeñas, los estimados de un único ajuste
-> traen más ruido de muestreo, que disminuye al aumentar el número de
-> sujetos.
+> **Note:** the example uses 300 subjects, a sample size large enough for the
+> estimates to land close to the true values used in the simulation
+> (`alpha = c(-0.3, 0.5)`, `beta = c(0.2, -0.4)`, `phi = 15`). With smaller
+> samples, the estimates from a single fit carry more sampling noise, which
+> decreases as the number of subjects grows.
+
 
 ``` r
 library(saemMicrobiome)
 
-# Solo hace falta cambiar n_subjects / n_time; n_obs se deriva de ellos.
+# You only need to change n_subjects / n_time; n_obs is derived from them.
 n_subjects <- 300
 n_time <- 4
 n_obs <- n_subjects * n_time
@@ -57,39 +56,39 @@ fit <- fit_zibr(
   n_iter = 500, seed = 1, compute_fim = FALSE
 )
 
-# Los estimados quedan cerca de los valores verdaderos (-0.3, 0.5, 0.2, -0.4, 15)
+# The estimates land close to the true values (-0.3, 0.5, 0.2, -0.4, 15)
 print(fit)
-#> ===== Resultados SAEM-ZIBR =====
-#> == Parte logistica: p_it ==
+#> ===== Results SAEM-ZIBR =====
+#> == Logistic part: p_it ==
 #>             Estimate   Type
 #> Intercept -0.3452480 Random
 #> X.1        0.5332735  Fixed
-#> == Parte beta: u_it ==
+#> == Beta part: u_it ==
 #>             Estimate   Type
 #> Intercept  0.2656632 Random
 #> Z.1       -0.5009376  Fixed
-#> === Varianzas de efectos aleatorios ===
-#> == Parte logistica ==
+#> === Random-effect variances ===
+#> == Logistic part ==
 #>            Variance  sqrt.Var
 #> Intercept 0.1999159 0.4471195
-#> == Parte beta ==
+#> == Beta part ==
 #>            Variance  sqrt.Var
 #> Intercept 0.1034754 0.3216759
 #> === Phi: 15.63579
-#> === Log-verosimilitud marginal (importance sampling): -493.249
+#> === Marginal log-likelihood (importance sampling): -493.249
 ```
 
-## Ejemplo: ZIBBMR (conteos con profundidad de secuenciacion)
+## Example: ZIBBMR (counts with sequencing depth)
 
-> **Nota:** al igual que en el ejemplo ZIBR, se usan 300 sujetos, un
-> tamaño de muestra suficiente para que los estimados queden cerca de
-> los valores verdaderos usados en la simulación
-> (`alpha = c(-0.3, 0.5)`, `beta = c(0.2, -0.4)`, `phi = 15`). Con
-> muestras más pequeñas, los estimados de un único ajuste traen más ruido
-> de muestreo, que disminuye al aumentar el número de sujetos.
+> **Note:** as in the ZIBR example, 300 subjects are used, a sample size large
+> enough for the estimates to land close to the true values used in the
+> simulation (`alpha = c(-0.3, 0.5)`, `beta = c(0.2, -0.4)`, `phi = 15`). With
+> smaller samples, the estimates from a single fit carry more sampling noise,
+> which decreases as the number of subjects grows.
+
 
 ``` r
-# Reutiliza n_subjects / n_time / n_obs del ejemplo anterior.
+# Reuses n_subjects / n_time / n_obs from the previous example.
 S <- rep(1000, n_obs)
 set.seed(3)
 dat_counts <- simulate_zibbmr_data(
@@ -106,40 +105,41 @@ fit_counts <- fit_zibbmr(
   n_iter = 500, seed = 1, compute_fim = FALSE
 )
 
-# Los estimados quedan cerca de los valores verdaderos (-0.3, 0.5, 0.2, -0.4, 15)
+# The estimates land close to the true values (-0.3, 0.5, 0.2, -0.4, 15)
 print(fit_counts)
-#> ===== Resultados SAEM-ZIBBMR =====
-#> == Parte logistica: p_it ==
+#> ===== Results SAEM-ZIBBMR =====
+#> == Logistic part: p_it ==
 #>             Estimate   Type
 #> Intercept -0.3165230 Random
 #> X.1        0.5434143  Fixed
-#> == Parte beta-binomial: u_it ==
+#> == Beta-binomial part: u_it ==
 #>            Estimate   Type
 #> Intercept  0.227703 Random
 #> Z.1       -0.444607  Fixed
-#> === Varianzas de efectos aleatorios ===
-#> == Parte logistica ==
+#> === Random-effect variances ===
+#> == Logistic part ==
 #>            Variance  sqrt.Var
 #> Intercept 0.1338111 0.3658019
-#> == Parte beta-binomial ==
+#> == Beta-binomial part ==
 #>            Variance  sqrt.Var
 #> Intercept 0.1277649 0.3574422
 #> === Phi: 16.97994
-#> === Log-verosimilitud marginal (importance sampling): -4542.437
+#> === Marginal log-likelihood (importance sampling): -4542.437
 ```
 
-## Ajuste por taxon y comparación de modelos anidados
+## Per-taxon fit and nested-model comparison
+
 
 ``` r
-sim <- simular_datos_microbioma(n_ind = 15, n_time = 4, n_taxa = 3, seed = 1)
+sim <- simulate_microbiome_data(n_ind = 15, n_time = 4, n_taxa = 3, seed = 1)
 
 full <- fit_zibr_taxon(
-  data = sim$proporcion, taxon = "Taxon1", id = "id",
-  covariates = c("tiempo", "grupo"), n_iter = 50, seed = 1
+  data = sim$proportion, taxon = "Taxon1", id = "id",
+  covariates = c("time", "group"), n_iter = 50, seed = 1
 )
 reduced <- fit_zibr_taxon(
-  data = sim$proporcion, taxon = "Taxon1", id = "id",
-  covariates = "tiempo", n_iter = 50, seed = 1
+  data = sim$proportion, taxon = "Taxon1", id = "id",
+  covariates = "time", n_iter = 50, seed = 1
 )
 
 lrt_zibr(full, reduced, df = 1)
@@ -147,8 +147,8 @@ lrt_zibr(full, reduced, df = 1)
 #> 1 14.80238   13.75381 2.097151  1 0.1475739
 ```
 
-## Más información
+## More information
 
-Ver `vignette("get-started", package = "saemMicrobiome")` para una
-introducción más completa, incluyendo cuando usar ZIBR vs. ZIBBMR y como
-preparar datos propios.
+See `vignette("get-started", package = "saemMicrobiome")` for a more complete
+introduction, including when to use ZIBR vs. ZIBBMR and how to prepare your own
+data.

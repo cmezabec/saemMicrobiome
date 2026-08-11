@@ -1,23 +1,23 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-// Version compilada de .saem_linear_prob(): calcula el predictor lineal
-// logistico por observacion y le aplica plogis(). Es la funcion mas llamada
-// del motor SAEM (~6 veces por iteracion). Fusiona en un solo recorrido el
-// "gather" de filas de psi por sujeto-cadena (id), el producto por la matriz
-// de diseno y la suma por fila, evitando materializar las matrices
-// intermedias que creaba la version en R puro.
+// Compiled version of .saem_linear_prob(): computes the logistic linear
+// predictor per observation and applies plogis() to it. It is the most called
+// function of the SAEM engine (~6 times per iteration). In a single pass it
+// fuses the "gather" of psi rows by subject-chain (id), the product with the
+// design matrix and the row-wise sum, avoiding materializing the intermediate
+// matrices that the pure-R version created.
 //
-// Es deterministica (no usa RNG). Devuelve SOLO el predictor lineal eta; el
-// logistico plogis(eta) se aplica despues en R (vectorizado), de modo que el
-// resultado es byte-identico al de la version en R puro (misma rutina
-// stats::plogis()) y a la vez se evita materializar en R la matriz
-// intermedia psi[id, cols] y el rowSums.
+// It is deterministic (no RNG). It returns ONLY the linear predictor eta; the
+// logistic plogis(eta) is applied afterwards in R (vectorized), so the result
+// is byte-identical to the pure-R version (same stats::plogis() routine) while
+// also avoiding materializing in R the intermediate matrix psi[id, cols] and
+// the rowSums.
 //
-// psi:    matriz (n_subjects*n_chains) x n_psi con los efectos por sujeto-cadena
-// cols:   indices de columna de psi a usar (base 1, como en R)
-// id:     indice de fila de psi para cada observacion (base 1, longitud M)
-// design: matriz M x length(cols) con las covariables (incluye intercepto)
+// psi:    (n_subjects*n_chains) x n_psi matrix with the per-subject-chain effects
+// cols:   column indices of psi to use (1-based, as in R)
+// id:     row index of psi for each observation (1-based, length M)
+// design: M x length(cols) matrix with the covariates (includes intercept)
 //
 // [[Rcpp::export]]
 NumericVector saem_linear_eta_cpp(NumericMatrix psi,
@@ -28,7 +28,7 @@ NumericVector saem_linear_eta_cpp(NumericMatrix psi,
   const int k = cols.size();
   NumericVector eta(m);
 
-  // indices base 0
+  // 0-based indices
   std::vector<int> col0(k);
   for (int j = 0; j < k; ++j) col0[j] = cols[j] - 1;
 

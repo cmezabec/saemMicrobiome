@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibr.R
 \name{sim_zibr_data_clean}
 \alias{sim_zibr_data_clean}
-\title{Alias historico de simulate_zibr_data con la firma del codigo original}
+\title{Historical alias of simulate_zibr_data with the original code's signature}
 \usage{
 sim_zibr_data_clean(
   n.ind,
@@ -19,16 +19,16 @@ sim_zibr_data_clean(
 )
 }
 \arguments{
-\item{n.ind, n.obs.ind, zi, X, Z, alpha, beta, s1, s2, v, seed}{Ver los argumentos
-equivalentes de \code{\link[=simulate_zibr_data]{simulate_zibr_data()}}: \code{n.ind = n_subjects},
+\item{n.ind, n.obs.ind, zi, X, Z, alpha, beta, s1, s2, v, seed}{See the equivalent
+arguments of \code{\link[=simulate_zibr_data]{simulate_zibr_data()}}: \code{n.ind = n_subjects},
 \code{n.obs.ind = n_time}, \code{s1 = sigma_alpha}, \code{s2 = sigma_beta}, \code{v = phi}.}
 }
 \value{
-Un data frame, igual que \code{\link[=simulate_zibr_data]{simulate_zibr_data()}}.
+A data frame, same as \code{\link[=simulate_zibr_data]{simulate_zibr_data()}}.
 }
 \description{
-Envoltorio de compatibilidad hacia atras que expone \code{\link[=simulate_zibr_data]{simulate_zibr_data()}}
-con los nombres de argumento del script original de Barrera.
+Backward-compatibility wrapper that exposes \code{\link[=simulate_zibr_data]{simulate_zibr_data()}} with the
+argument names of Barrera's original script.
 }
 \seealso{
 \code{\link[=simulate_zibr_data]{simulate_zibr_data()}}

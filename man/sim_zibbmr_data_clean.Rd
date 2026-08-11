@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibbmr.R
 \name{sim_zibbmr_data_clean}
 \alias{sim_zibbmr_data_clean}
-\title{Alias historico de simulate_zibbmr_data con la firma del codigo original}
+\title{Historical alias of simulate_zibbmr_data with the original code's signature}
 \usage{
 sim_zibbmr_data_clean(
   n.ind,
@@ -20,17 +20,17 @@ sim_zibbmr_data_clean(
 )
 }
 \arguments{
-\item{n.ind, n.obs.ind, s.tot, zi, X, Z, alpha, beta, s1, s2, v, seed}{Ver los
-argumentos equivalentes de \code{\link[=simulate_zibbmr_data]{simulate_zibbmr_data()}}: \code{n.ind = n_subjects}, \code{n.obs.ind = n_time}, \code{s.tot = S}, \code{s1 = sigma_alpha},
-\code{s2 = sigma_beta}, \code{v = phi}.}
+\item{n.ind, n.obs.ind, s.tot, zi, X, Z, alpha, beta, s1, s2, v, seed}{See the
+equivalent arguments of \code{\link[=simulate_zibbmr_data]{simulate_zibbmr_data()}}: \code{n.ind = n_subjects},
+\code{n.obs.ind = n_time}, \code{s.tot = S}, \code{s1 = sigma_alpha}, \code{s2 = sigma_beta},
+\code{v = phi}.}
 }
 \value{
-Un data frame, igual que \code{\link[=simulate_zibbmr_data]{simulate_zibbmr_data()}}.
+A data frame, same as \code{\link[=simulate_zibbmr_data]{simulate_zibbmr_data()}}.
 }
 \description{
-Envoltorio de compatibilidad hacia atras que expone
-\code{\link[=simulate_zibbmr_data]{simulate_zibbmr_data()}} con los nombres de argumento del script original
-de Barrera.
+Backward-compatibility wrapper that exposes \code{\link[=simulate_zibbmr_data]{simulate_zibbmr_data()}} with
+the argument names of Barrera's original script.
 }
 \seealso{
 \code{\link[=simulate_zibbmr_data]{simulate_zibbmr_data()}}

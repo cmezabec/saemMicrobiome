@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibr.R
 \name{zibr_results_table}
 \alias{zibr_results_table}
-\title{Tabla resumen de tres comparaciones LRT tipicas para ZIBR}
+\title{Summary table of three typical LRT comparisons for ZIBR}
 \usage{
 zibr_results_table(
   species,
@@ -16,26 +16,25 @@ zibr_results_table(
 )
 }
 \arguments{
-\item{species}{Vector de nombres/etiquetas para cada taxon.}
+\item{species}{Vector of names/labels for each taxon.}
 
-\item{mod1_full, mod1_no_preg}{Listas de modelos ZIBR (con y sin el efecto
-principal) para la primera comparacion, uno por taxon.}
+\item{mod1_full, mod1_no_preg}{Lists of ZIBR models (with and without the
+main effect) for the first comparison, one per taxon.}
 
-\item{mod2_full, mod2_no_preg, mod2_no_inter}{Listas de modelos ZIBR para la
-segunda comparacion (efecto principal) y la prueba de interaccion, uno
-por taxon.}
+\item{mod2_full, mod2_no_preg, mod2_no_inter}{Lists of ZIBR models for the
+second comparison (main effect) and the interaction test, one per taxon.}
 
-\item{df}{Grados de libertad usados en las tres pruebas.}
+\item{df}{Degrees of freedom used in the three tests.}
 
-\item{alpha}{Nivel de significancia usado para las columnas \verb{Detec_*}.}
+\item{alpha}{Significance level used for the \verb{Detec_*} columns.}
 }
 \value{
-Un data frame con una fila por taxon, con las log-verosimilitudes,
-p-valores y detecciones de las tres comparaciones.
+A data frame with one row per taxon, with the log-likelihoods,
+p-values and detections of the three comparisons.
 }
 \description{
-Arma una tabla de resultados con dos pruebas de razon de verosimilitudes
-sobre un efecto principal (\code{mod1} vs. \code{mod2}, ej. embarazo) y una prueba de
-interaccion (\code{mod2} con y sin termino de interaccion), replicando el
-formato de reporte usado en el analisis de datos tipo Romero.
+Builds a results table with two likelihood-ratio tests on a main effect
+(\code{mod1} vs. \code{mod2}, e.g. pregnancy) and an interaction test (\code{mod2} with and
+without an interaction term), replicating the reporting format used in the
+Romero-type data analysis.
 }

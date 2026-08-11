@@ -2,24 +2,24 @@
 % Please edit documentation in R/zibbmr.R
 \name{lrt_zibbmr}
 \alias{lrt_zibbmr}
-\title{Prueba de razon de verosimilitudes entre dos ajustes ZIBBMR anidados}
+\title{Likelihood-ratio test between two nested ZIBBMR fits}
 \usage{
 lrt_zibbmr(full, reduced, df = 2)
 }
 \arguments{
-\item{full}{Modelo completo: un objeto \code{zibbmr_saem} o cualquier objeto
-con metodo \code{\link[stats:logLik]{stats::logLik()}}.}
+\item{full}{Full model: a \code{zibbmr_saem} object or any object with a
+\code{\link[stats:logLik]{stats::logLik()}} method.}
 
-\item{reduced}{Modelo reducido (anidado en \code{full}), mismo tipo que \code{full}.}
+\item{reduced}{Reduced model (nested in \code{full}), same type as \code{full}.}
 
-\item{df}{Grados de libertad de la prueba.}
+\item{df}{Degrees of freedom of the test.}
 }
 \value{
-Un data frame de una fila con \code{LL_full}, \code{LL_reduced}, \code{LRT}, \code{df}
-y \code{p_value}.
+A one-row data frame with \code{LL_full}, \code{LL_reduced}, \code{LRT}, \code{df} and
+\code{p_value}.
 }
 \description{
-Analogo de \code{\link[=lrt_zibr]{lrt_zibr()}} para modelos ZIBBMR.
+Analogue of \code{\link[=lrt_zibr]{lrt_zibr()}} for ZIBBMR models.
 }
 \seealso{
 \code{\link[=lrt_zibbmr_table]{lrt_zibbmr_table()}}, \code{\link[=lrt_zibr]{lrt_zibr()}}

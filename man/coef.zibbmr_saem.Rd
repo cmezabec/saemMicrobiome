@@ -2,19 +2,19 @@
 % Please edit documentation in R/zibbmr.R
 \name{coef.zibbmr_saem}
 \alias{coef.zibbmr_saem}
-\title{Coeficientes estimados de un ajuste ZIBBMR}
+\title{Estimated coefficients of a ZIBBMR fit}
 \usage{
 \method{coef}{zibbmr_saem}(object, ...)
 }
 \arguments{
-\item{object}{Un objeto \code{zibbmr_saem}, resultado de \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
+\item{object}{A \code{zibbmr_saem} object, the result of \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
 
-\item{...}{No usado, por compatibilidad con el generico \code{\link[stats:coef]{stats::coef()}}.}
+\item{...}{Unused, for compatibility with the \code{\link[stats:coef]{stats::coef()}} generic.}
 }
 \value{
-Vector numerico \code{mu} con los coeficientes de la parte logistica
-seguidos de los de la parte beta-binomial.
+Numeric vector \code{mu} with the coefficients of the logistic part
+followed by those of the beta-binomial part.
 }
 \description{
-Coeficientes estimados de un ajuste ZIBBMR
+Estimated coefficients of a ZIBBMR fit
 }

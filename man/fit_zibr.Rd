@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibr.R
 \name{fit_zibr}
 \alias{fit_zibr}
-\title{Ajustar un modelo ZIBR (zero-inflated beta regression) via SAEM}
+\title{Fit a ZIBR (zero-inflated beta regression) model via SAEM}
 \usage{
 fit_zibr(
   y,
@@ -25,72 +25,72 @@ fit_zibr(
 )
 }
 \arguments{
-\item{y}{Vector numerico de proporciones en \verb{[0, 1)} (la respuesta).}
+\item{y}{Numeric vector of proportions in \verb{[0, 1)} (the response).}
 
-\item{id}{Vector (o factor) que identifica al sujeto de cada observacion en
-\code{y}. Debe tener la misma longitud que \code{y}.}
+\item{id}{Vector (or factor) identifying the subject of each observation in
+\code{y}. Must have the same length as \code{y}.}
 
-\item{X}{Matriz o data frame de covariables para la parte de inflacion de
-ceros (parte logistica). \code{NULL} si \code{zi = FALSE}.}
+\item{X}{Matrix or data frame of covariates for the zero-inflation part
+(logistic part). \code{NULL} if \code{zi = FALSE}.}
 
-\item{Z}{Matriz o data frame de covariables para la parte beta (magnitud
-condicional). \code{NULL} equivale a solo intercepto.}
+\item{Z}{Matrix or data frame of covariates for the beta part (conditional
+magnitude). \code{NULL} is equivalent to intercept only.}
 
-\item{zi}{Logico. Si \code{TRUE} (por defecto) ajusta la parte de inflacion de
-ceros; si \code{FALSE}, asume que \code{y} no tiene ceros estructurales.}
+\item{zi}{Logical. If \code{TRUE} (default) fits the zero-inflation part; if
+\code{FALSE}, assumes \code{y} has no structural zeros.}
 
-\item{phi_start}{Valor inicial del parametro de dispersion \code{phi} de la
-parte beta.}
+\item{phi_start}{Starting value for the dispersion parameter \code{phi} of the
+beta part.}
 
-\item{alpha_start}{Vector de valores iniciales para los coeficientes de la
-parte logistica (intercepto + columnas de \code{X}). Requerido si \code{zi = TRUE}.}
+\item{alpha_start}{Vector of starting values for the coefficients of the
+logistic part (intercept + columns of \code{X}). Required if \code{zi = TRUE}.}
 
-\item{beta_start}{Vector de valores iniciales para los coeficientes de la
-parte beta (intercepto + columnas de \code{Z}).}
+\item{beta_start}{Vector of starting values for the coefficients of the beta
+part (intercept + columns of \code{Z}).}
 
-\item{n_iter}{Numero de iteraciones del algoritmo SAEM.}
+\item{n_iter}{Number of iterations of the SAEM algorithm.}
 
-\item{n_chains}{Numero de cadenas MCMC paralelas usadas en el paso de
-simulacion estocastica (S-step).}
+\item{n_chains}{Number of parallel MCMC chains used in the stochastic
+simulation step (S-step).}
 
-\item{seed}{Semilla aleatoria opcional.}
+\item{seed}{Optional random seed.}
 
-\item{alpha_random}{Vector logico que indica que coeficientes de la parte
-logistica son efectos aleatorios (por defecto, solo el intercepto).}
+\item{alpha_random}{Logical vector indicating which coefficients of the
+logistic part are random effects (by default, only the intercept).}
 
-\item{beta_random}{Vector logico que indica que coeficientes de la parte
-beta son efectos aleatorios (por defecto, solo el intercepto).}
+\item{beta_random}{Logical vector indicating which coefficients of the beta
+part are random effects (by default, only the intercept).}
 
-\item{n_is}{Numero de muestras de importance sampling usadas para estimar
-la log-verosimilitud marginal al final del ajuste.}
+\item{n_is}{Number of importance-sampling draws used to estimate the
+marginal log-likelihood at the end of the fit.}
 
-\item{compute_fim}{Logico. Si \code{TRUE}, calcula la matriz de informacion de
-Fisher estocastica (necesaria para \code{vcov()}/\code{se()}).}
+\item{compute_fim}{Logical. If \code{TRUE}, computes the stochastic Fisher
+information matrix (needed for \code{vcov()}/\code{se()}).}
 
-\item{eps}{Valor pequeno usado para evitar \code{log(0)} cuando \code{y} contiene
-valores exactamente 0 (con \code{zi = FALSE}) o exactamente 1.}
+\item{eps}{Small value used to avoid \code{log(0)} when \code{y} contains values
+exactly equal to 0 (with \code{zi = FALSE}) or exactly equal to 1.}
 
-\item{cov_random}{Estructura de la covarianza de los efectos aleatorios:
-\code{"diag"} (por defecto, independientes entre las dos partes del modelo) o
-\code{"unstructured"} (estima tambien la covarianza). Ver \code{\link[=fit_zibbmr]{fit_zibbmr()}} para
-las advertencias sobre \code{"unstructured"}.}
+\item{cov_random}{Structure of the random-effect covariance: \code{"diag"}
+(default, independent between the two model parts) or \code{"unstructured"}
+(also estimates the covariance). See \code{\link[=fit_zibbmr]{fit_zibbmr()}} for the caveats about
+\code{"unstructured"}.}
 }
 \value{
-Un objeto de clase \code{zibr_saem} (y \code{SAEM_ZIBR_result} por
-compatibilidad), una lista con, entre otros, los elementos \code{mu} (alpha y
-beta concatenados), \code{G} (varianza de efectos aleatorios), \code{phi},
-\code{loglik}, \code{trace} y \code{fisher_stoch}. Tiene metodos \code{\link[=print]{print()}}, \code{\link[=plot]{plot()}},
-\code{\link[stats:logLik]{stats::logLik()}}, \code{\link[stats:coef]{stats::coef()}}, \code{\link[stats:vcov]{stats::vcov()}} y \code{\link[=se]{se()}}.
+An object of class \code{zibr_saem} (and \code{SAEM_ZIBR_result} for
+compatibility), a list containing, among others, the elements \code{mu} (alpha
+and beta concatenated), \code{G} (random-effect variance), \code{phi}, \code{loglik},
+\code{trace} and \code{fisher_stoch}. It has \code{\link[=print]{print()}}, \code{\link[=plot]{plot()}}, \code{\link[stats:logLik]{stats::logLik()}},
+\code{\link[stats:coef]{stats::coef()}}, \code{\link[stats:vcov]{stats::vcov()}} and \code{\link[=se]{se()}} methods.
 }
 \description{
-Estima por Stochastic Approximation EM (SAEM) un modelo mixto de regresion
-beta con inflacion de ceros para una variable respuesta acotada en \verb{[0, 1)}
-(por ejemplo, abundancia relativa de un taxon de microbioma), siguiendo el
-metodo descrito en Barrera (ZIBR: "A stochastic method to estimate a
-zero-inflated two-part mixed model for human microbiome data"). El modelo
-tiene dos partes: una logistica para la probabilidad de presencia
-(\code{X}/\code{alpha}) y una beta para la magnitud condicional a estar presente
-(\code{Z}/\code{beta}, \code{phi}), ambas con un intercepto aleatorio por sujeto.
+Estimates, by Stochastic Approximation EM (SAEM), a zero-inflated beta
+mixed-regression model for a response bounded in \verb{[0, 1)} (for example, the
+relative abundance of a microbiome taxon), following the method described in
+Barrera (ZIBR: "A stochastic method to estimate a zero-inflated two-part
+mixed model for human microbiome data"). The model has two parts: a logistic
+part for the presence probability (\code{X}/\code{alpha}) and a beta part for the
+magnitude conditional on being present (\code{Z}/\code{beta}, \code{phi}), both with a
+per-subject random intercept.
 }
 \examples{
 \donttest{
@@ -112,7 +112,7 @@ print(fit)
 }
 }
 \seealso{
-\code{\link[=fit_zibr_taxon]{fit_zibr_taxon()}} para ajustar directamente sobre una columna de
-un data frame, \code{\link[=simulate_zibr_data]{simulate_zibr_data()}} para generar datos de prueba,
-\code{\link[=lrt_zibr]{lrt_zibr()}} para comparar modelos anidados.
+\code{\link[=fit_zibr_taxon]{fit_zibr_taxon()}} to fit directly on a data-frame column,
+\code{\link[=simulate_zibr_data]{simulate_zibr_data()}} to generate test data, \code{\link[=lrt_zibr]{lrt_zibr()}} to compare
+nested models.
 }

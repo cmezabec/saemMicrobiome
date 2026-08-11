@@ -2,27 +2,27 @@
 % Please edit documentation in R/zibr.R
 \name{lrt_zibr}
 \alias{lrt_zibr}
-\title{Prueba de razon de verosimilitudes entre dos ajustes ZIBR anidados}
+\title{Likelihood-ratio test between two nested ZIBR fits}
 \usage{
 lrt_zibr(full, reduced, df = 2)
 }
 \arguments{
-\item{full}{Modelo completo: un objeto \code{zibr_saem} o cualquier objeto con
-metodo \code{\link[stats:logLik]{stats::logLik()}}.}
+\item{full}{Full model: a \code{zibr_saem} object or any object with a
+\code{\link[stats:logLik]{stats::logLik()}} method.}
 
-\item{reduced}{Modelo reducido (anidado en \code{full}), mismo tipo que \code{full}.}
+\item{reduced}{Reduced model (nested in \code{full}), same type as \code{full}.}
 
-\item{df}{Grados de libertad de la prueba (numero de parametros extra en
-\code{full} respecto a \code{reduced}).}
+\item{df}{Degrees of freedom of the test (number of extra parameters in
+\code{full} relative to \code{reduced}).}
 }
 \value{
-Un data frame de una fila con \code{LL_full}, \code{LL_reduced}, \code{LRT}
-(estadistico), \code{df} y \code{p_value}.
+A one-row data frame with \code{LL_full}, \code{LL_reduced}, \code{LRT} (the
+statistic), \code{df} and \code{p_value}.
 }
 \description{
-Compara dos modelos ZIBR anidados (por ejemplo, con y sin una covariable)
-mediante un test de razon de verosimilitudes usando la log-verosimilitud
-marginal (importance sampling) de cada ajuste.
+Compares two nested ZIBR models (for example, with and without a covariate)
+via a likelihood-ratio test using the marginal log-likelihood (importance
+sampling) of each fit.
 }
 \seealso{
 \code{\link[=lrt_zibr_table]{lrt_zibr_table()}}

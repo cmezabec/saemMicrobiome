@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibbmr.R
 \name{fit_zibbmr_taxon}
 \alias{fit_zibbmr_taxon}
-\title{Ajustar ZIBBMR para un taxon de un data frame}
+\title{Fit ZIBBMR for one taxon of a data frame}
 \usage{
 fit_zibbmr_taxon(
   data,
@@ -24,56 +24,55 @@ fit_zibbmr_taxon(
 )
 }
 \arguments{
-\item{data}{Data frame con una fila por observacion, incluyendo la columna
-del taxon (conteos), la columna \code{total}, la columna de id y las
-covariables.}
+\item{data}{Data frame with one row per observation, including the taxon
+column (counts), the \code{total} column, the id column and the covariates.}
 
-\item{taxon}{Nombre de la columna en \code{data} con el conteo del taxon a
-modelar.}
+\item{taxon}{Name of the column in \code{data} with the taxon count to be
+modelled.}
 
-\item{covariates}{Vector de nombres de columnas a usar como covariables en
-ambas partes del modelo. Se ignora si se entregan
-\code{x_covariates}/\code{z_covariates} por separado.}
+\item{covariates}{Vector of column names to use as covariates in both parts
+of the model. Ignored if \code{x_covariates}/\code{z_covariates} are supplied
+separately.}
 
-\item{x_covariates}{Nombres de columnas para la parte de inflacion de
-ceros (por defecto, igual a \code{covariates}).}
+\item{x_covariates}{Column names for the zero-inflation part (by default,
+equal to \code{covariates}).}
 
-\item{z_covariates}{Nombres de columnas para la parte beta-binomial (por
-defecto, igual a \code{covariates}).}
+\item{z_covariates}{Column names for the beta-binomial part (by default,
+equal to \code{covariates}).}
 
-\item{total}{Nombre de la columna en \code{data} con el total de lecturas de
-cada observacion.}
+\item{total}{Name of the column in \code{data} with the total reads of each
+observation.}
 
-\item{id}{Nombre de la columna en \code{data} que identifica al sujeto.}
+\item{id}{Name of the column in \code{data} that identifies the subject.}
 
-\item{zi}{Logico, ver \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
+\item{zi}{Logical, see \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
 
-\item{phi_start}{Valor inicial de \code{phi}. Si es \code{NULL}, se sortea con
+\item{phi_start}{Starting value of \code{phi}. If \code{NULL}, it is drawn with
 \code{runif(1, 10, 20)}.}
 
-\item{alpha_start}{Valores iniciales de la parte logistica. Si es \code{NULL},
-se sortean con \code{runif(., -0.1, 0.1)}.}
+\item{alpha_start}{Starting values of the logistic part. If \code{NULL}, they are
+drawn with \code{runif(., -0.1, 0.1)}.}
 
-\item{beta_start}{Valores iniciales de la parte beta-binomial. Si es
-\code{NULL}, se sortean con \code{runif(., -0.1, 0.1)}.}
+\item{beta_start}{Starting values of the beta-binomial part. If \code{NULL}, they
+are drawn with \code{runif(., -0.1, 0.1)}.}
 
-\item{seed}{Semilla aleatoria.}
+\item{seed}{Random seed.}
 
-\item{n_iter}{Numero de iteraciones SAEM.}
+\item{n_iter}{Number of SAEM iterations.}
 
-\item{n_chains}{Numero de cadenas MCMC.}
+\item{n_chains}{Number of MCMC chains.}
 
-\item{compute_fim}{Logico, ver \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
+\item{compute_fim}{Logical, see \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
 
-\item{...}{Argumentos adicionales pasados a \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
+\item{...}{Additional arguments passed to \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
 }
 \value{
-Un objeto \code{zibbmr_saem}, igual que \code{\link[=fit_zibbmr]{fit_zibbmr()}}.
+A \code{zibbmr_saem} object, same as \code{\link[=fit_zibbmr]{fit_zibbmr()}}.
 }
 \description{
-Envoltorio de \code{\link[=fit_zibbmr]{fit_zibbmr()}} pensado para trabajar directamente sobre un
-data frame de microbioma en formato largo con conteos por taxon y una
-columna de profundidad de secuenciacion total.
+Wrapper around \code{\link[=fit_zibbmr]{fit_zibbmr()}} meant to work directly on a long-format
+microbiome data frame with per-taxon counts and a total sequencing-depth
+column.
 }
 \seealso{
 \code{\link[=fit_zibbmr]{fit_zibbmr()}}, \code{\link[=fit_zibbmr_taxa]{fit_zibbmr_taxa()}}

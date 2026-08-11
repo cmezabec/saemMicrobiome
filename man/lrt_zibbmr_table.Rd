@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibbmr.R
 \name{lrt_zibbmr_table}
 \alias{lrt_zibbmr_table}
-\title{Tabla de pruebas de razon de verosimilitudes para varios taxones ZIBBMR}
+\title{Table of likelihood-ratio tests for several ZIBBMR taxa}
 \usage{
 lrt_zibbmr_table(
   full_models,
@@ -13,22 +13,22 @@ lrt_zibbmr_table(
 )
 }
 \arguments{
-\item{full_models}{Lista de modelos completos (uno por taxon).}
+\item{full_models}{List of full models (one per taxon).}
 
-\item{reduced_models}{Lista de modelos reducidos (uno por taxon, mismo
-orden que \code{full_models}).}
+\item{reduced_models}{List of reduced models (one per taxon, same order as
+\code{full_models}).}
 
-\item{species}{Vector de nombres/etiquetas para cada taxon.}
+\item{species}{Vector of names/labels for each taxon.}
 
-\item{df}{Grados de libertad de la prueba.}
+\item{df}{Degrees of freedom of the test.}
 
-\item{alpha}{Nivel de significancia usado para marcar \code{Detected}.}
+\item{alpha}{Significance level used to flag \code{Detected}.}
 }
 \value{
-Un data frame con una fila por taxon, ver \code{\link[=lrt_zibbmr]{lrt_zibbmr()}}.
+A data frame with one row per taxon, see \code{\link[=lrt_zibbmr]{lrt_zibbmr()}}.
 }
 \description{
-Analogo de \code{\link[=lrt_zibr_table]{lrt_zibr_table()}} para modelos ZIBBMR.
+Analogue of \code{\link[=lrt_zibr_table]{lrt_zibr_table()}} for ZIBBMR models.
 }
 \seealso{
 \code{\link[=lrt_zibbmr]{lrt_zibbmr()}}

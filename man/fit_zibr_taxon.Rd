@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibr.R
 \name{fit_zibr_taxon}
 \alias{fit_zibr_taxon}
-\title{Ajustar ZIBR para un taxon de un data frame}
+\title{Fit ZIBR for one taxon of a data frame}
 \usage{
 fit_zibr_taxon(
   data,
@@ -23,55 +23,54 @@ fit_zibr_taxon(
 )
 }
 \arguments{
-\item{data}{Data frame con una fila por observacion, incluyendo la columna
-del taxon, la columna de id y las covariables.}
+\item{data}{Data frame with one row per observation, including the taxon
+column, the id column and the covariates.}
 
-\item{taxon}{Nombre de la columna en \code{data} con la proporcion del taxon a
-modelar.}
+\item{taxon}{Name of the column in \code{data} with the taxon proportion to be
+modelled.}
 
-\item{covariates}{Vector de nombres de columnas a usar como covariables
-tanto en la parte logistica como en la parte beta. Se ignora si se
-entregan \code{x_covariates}/\code{z_covariates} por separado.}
+\item{covariates}{Vector of column names to use as covariates in both the
+logistic part and the beta part. Ignored if \code{x_covariates}/\code{z_covariates}
+are supplied separately.}
 
-\item{x_covariates}{Nombres de columnas para la parte de inflacion de
-ceros (por defecto, igual a \code{covariates}).}
+\item{x_covariates}{Column names for the zero-inflation part (by default,
+equal to \code{covariates}).}
 
-\item{z_covariates}{Nombres de columnas para la parte beta (por defecto,
-igual a \code{covariates}).}
+\item{z_covariates}{Column names for the beta part (by default, equal to
+\code{covariates}).}
 
-\item{id}{Nombre de la columna en \code{data} que identifica al sujeto.}
+\item{id}{Name of the column in \code{data} that identifies the subject.}
 
-\item{zi}{Logico, ver \code{\link[=fit_zibr]{fit_zibr()}}.}
+\item{zi}{Logical, see \code{\link[=fit_zibr]{fit_zibr()}}.}
 
-\item{phi_start}{Valor inicial de \code{phi}. Si es \code{NULL}, se sortea con
+\item{phi_start}{Starting value of \code{phi}. If \code{NULL}, it is drawn with
 \code{runif(1, 10, 20)}.}
 
-\item{alpha_start}{Valores iniciales de la parte logistica. Si es \code{NULL},
-se sortean con \code{runif(., -0.1, 0.1)}.}
+\item{alpha_start}{Starting values of the logistic part. If \code{NULL}, they are
+drawn with \code{runif(., -0.1, 0.1)}.}
 
-\item{beta_start}{Valores iniciales de la parte beta. Si es \code{NULL}, se
-sortean con \code{runif(., -0.1, 0.1)}.}
+\item{beta_start}{Starting values of the beta part. If \code{NULL}, they are
+drawn with \code{runif(., -0.1, 0.1)}.}
 
-\item{seed}{Semilla aleatoria, usada tanto para los valores iniciales como
-para el ajuste SAEM.}
+\item{seed}{Random seed, used both for the starting values and for the SAEM
+fit.}
 
-\item{n_iter}{Numero de iteraciones SAEM.}
+\item{n_iter}{Number of SAEM iterations.}
 
-\item{n_chains}{Numero de cadenas MCMC.}
+\item{n_chains}{Number of MCMC chains.}
 
-\item{compute_fim}{Logico, ver \code{\link[=fit_zibr]{fit_zibr()}}.}
+\item{compute_fim}{Logical, see \code{\link[=fit_zibr]{fit_zibr()}}.}
 
-\item{...}{Argumentos adicionales pasados a \code{\link[=fit_zibr]{fit_zibr()}}.}
+\item{...}{Additional arguments passed to \code{\link[=fit_zibr]{fit_zibr()}}.}
 }
 \value{
-Un objeto \code{zibr_saem}, igual que \code{\link[=fit_zibr]{fit_zibr()}}.
+A \code{zibr_saem} object, same as \code{\link[=fit_zibr]{fit_zibr()}}.
 }
 \description{
-Envoltorio de \code{\link[=fit_zibr]{fit_zibr()}} pensado para trabajar directamente sobre un
-data frame de microbioma en formato largo (una fila por sujeto-tiempo,
-una columna por taxon). Extrae la columna del taxon y las covariables por
-nombre, genera valores iniciales aleatorios razonables si no se entregan,
-y llama a \code{\link[=fit_zibr]{fit_zibr()}}.
+Wrapper around \code{\link[=fit_zibr]{fit_zibr()}} meant to work directly on a long-format
+microbiome data frame (one row per subject-time, one column per taxon).
+Extracts the taxon column and the covariates by name, generates reasonable
+random starting values if none are supplied, and calls \code{\link[=fit_zibr]{fit_zibr()}}.
 }
 \seealso{
 \code{\link[=fit_zibr]{fit_zibr()}}, \code{\link[=fit_zibr_taxa]{fit_zibr_taxa()}}

@@ -1,4 +1,4 @@
-test_that("simulate_zibbmr_data devuelve la estructura esperada", {
+test_that("simulate_zibbmr_data returns the expected structure", {
   dat <- simulate_zibbmr_data(
     n_subjects = 10, n_time = 3, S = rep(1000, 30),
     alpha = c(-0.3, 0.5), beta = c(0.2, -0.4),
@@ -12,14 +12,14 @@ test_that("simulate_zibbmr_data devuelve la estructura esperada", {
   expect_true(all(dat$Y >= 0 & dat$Y <= dat$TotalCounts))
 })
 
-test_that("fit_zibbmr reproduce un resultado conocido para una semilla fija", {
-  # Se salta en CI: tras el arreglo de la covarianza (que usa solve()/det() y
-  # descomposiciones en el loop), el resultado deja de ser identico bit-a-bit
-  # entre sistemas operativos (las librerias de algebra lineal difieren entre
-  # macOS y Linux). La diferencia (~0.02-0.1) esta dentro del ruido semilla a
-  # semilla del algoritmo, asi que los resultados son estadisticamente
-  # equivalentes; este test fija valores exactos y solo es fiable en la
-  # plataforma de referencia (la maquina de desarrollo).
+test_that("fit_zibbmr reproduces a known result for a fixed seed", {
+  # Skipped on CI: after the covariance fix (which uses solve()/det() and
+  # decompositions inside the loop), the result is no longer byte-identical
+  # across operating systems (the linear-algebra libraries differ between
+  # macOS and Linux). The difference (~0.02-0.1) is within the seed-to-seed
+  # noise of the algorithm, so the results are statistically equivalent; this
+  # test pins exact values and is only reliable on the reference platform (the
+  # development machine).
   skip_on_ci()
   n_subjects <- 40
   n_time <- 4
@@ -42,14 +42,13 @@ test_that("fit_zibbmr reproduce un resultado conocido para una semilla fija", {
   )
 
   expect_s3_class(fit, "zibbmr_saem")
-  # Valores regenerados (ago-2026) tras corregir el manejo de la covarianza de
-  # los efectos aleatorios: ver tests/testthat/test-covarianza-efectos-aleatorios.R
-  # y la nota en .saem_diag_inverse(). Con cov_random = "diag" (el valor por
-  # defecto, que es la especificacion del articulo) el cambio es pequeno y esta
-  # muy por debajo del ruido semilla a semilla del algoritmo: la diferencia
-  # maxima en mu es 1.4e-2 en ZIBBMR y 2.8e-2 en ZIBR, contra una desviacion
-  # entre semillas del orden de 7e-2. Los resultados publicados no se ven
-  # materialmente afectados.
+  # Values regenerated (Aug 2026) after fixing the handling of the random-effect
+  # covariance: see tests/testthat/test-random-effect-covariance.R and the
+  # note in .saem_diag_inverse(). With cov_random = "diag" (the default, which
+  # is the specification of the paper) the change is small and well below the
+  # seed-to-seed noise of the algorithm: the maximum difference in mu is 1.4e-2
+  # in ZIBBMR and 2.8e-2 in ZIBR, against a between-seed deviation on the order
+  # of 7e-2. The published results are not materially affected.
   expect_equal(
     fit$mu,
     c(-0.1660967, 0.4001918, 0.1179033, -0.3392167),
@@ -59,7 +58,7 @@ test_that("fit_zibbmr reproduce un resultado conocido para una semilla fija", {
   expect_equal(fit$loglik, -616.1987, tolerance = 1e-2)
 })
 
-test_that("saem_zibbmr_clean (alias historico) da el mismo resultado que fit_zibbmr", {
+test_that("saem_zibbmr_clean (historical alias) gives the same result as fit_zibbmr", {
   set.seed(9)
   n <- 60
   X <- matrix(rbinom(n, 1, 0.5), ncol = 1)
@@ -87,7 +86,7 @@ test_that("saem_zibbmr_clean (alias historico) da el mismo resultado que fit_zib
   expect_equal(via_fit$loglik, via_clean$loglik)
 })
 
-test_that("metodos S3 de zibbmr_saem devuelven la estructura esperada", {
+test_that("zibbmr_saem S3 methods return the expected structure", {
   S <- rep(500, 30)
   dat <- simulate_zibbmr_data(
     n_subjects = 10, n_time = 3, S = S, alpha = c(-0.2, 0.3), beta = c(0.1, -0.2),
@@ -105,8 +104,8 @@ test_that("metodos S3 de zibbmr_saem devuelven la estructura esperada", {
   expect_length(coef(fit), 4)
   expect_s3_class(logLik(fit), "logLik")
   expect_true(is.matrix(vcov(fit)))
-  # con pocas iteraciones/observaciones el FIM estocastico puede quedar
-  # mal condicionado y producir NaN en algun se(); solo se prueba el tipo.
+  # with few iterations/observations the stochastic FIM can be ill-conditioned
+  # and produce NaN in some se(); only the type is tested.
   expect_type(suppressWarnings(se(fit)), "double")
   expect_output(print(fit), "SAEM-ZIBBMR")
 
@@ -115,7 +114,7 @@ test_that("metodos S3 de zibbmr_saem devuelven la estructura esperada", {
   expect_no_error(plot(fit))
 })
 
-test_that("los tres tipos de grafico de zibbmr_saem se generan sin error", {
+test_that("the five plot types of zibbmr_saem are produced without error", {
   S <- rep(500, 60)
   dat <- simulate_zibbmr_data(
     n_subjects = 20, n_time = 3, S = S, alpha = c(-0.2, 0.3), beta = c(0.1, -0.2),
@@ -130,14 +129,14 @@ test_that("los tres tipos de grafico de zibbmr_saem se generan sin error", {
 
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off())
-  expect_no_error(plot(fit, which = "convergencia"))
-  expect_no_error(suppressWarnings(plot(fit, which = "coeficientes")))
-  expect_no_error(plot(fit, which = "aleatorios"))
-  expect_no_error(plot(fit, which = "ajuste"))
-  expect_no_error(plot(fit, which = "residuos"))
+  expect_no_error(plot(fit, which = "convergence"))
+  expect_no_error(suppressWarnings(plot(fit, which = "coefficients")))
+  expect_no_error(plot(fit, which = "random"))
+  expect_no_error(plot(fit, which = "fit"))
+  expect_no_error(plot(fit, which = "residuals"))
 })
 
-test_that("vcov.zibbmr_saem exige haber ajustado con compute_fim = TRUE", {
+test_that("vcov.zibbmr_saem requires having fitted with compute_fim = TRUE", {
   S <- rep(500, 30)
   dat <- simulate_zibbmr_data(
     n_subjects = 10, n_time = 3, S = S, alpha = c(-0.2, 0.3), beta = c(0.1, -0.2),
@@ -153,7 +152,7 @@ test_that("vcov.zibbmr_saem exige haber ajustado con compute_fim = TRUE", {
   expect_error(vcov(fit), "compute_fim = TRUE")
 })
 
-test_that("fit_zibbmr con zi = FALSE (sin inflacion de ceros) funciona", {
+test_that("fit_zibbmr with zi = FALSE (no zero inflation) works", {
   S <- rep(500, 60)
   dat <- simulate_zibbmr_data(
     n_subjects = 15, n_time = 4, S = S, zi = FALSE,
@@ -172,7 +171,7 @@ test_that("fit_zibbmr con zi = FALSE (sin inflacion de ceros) funciona", {
   expect_output(print(fit), "SAEM-ZIBBMR")
 })
 
-test_that("fit_zibbmr valida 0 <= y <= S y longitudes", {
+test_that("fit_zibbmr validates 0 <= y <= S and lengths", {
   expect_error(
     fit_zibbmr(
       y = c(10, 20), S = c(5, 20), id = c(1, 1), Z = NULL,
@@ -185,6 +184,6 @@ test_that("fit_zibbmr valida 0 <= y <= S y longitudes", {
       y = c(1, 2, 3), S = c(10, 10), id = c(1, 1), Z = NULL,
       phi_start = 10, beta_start = 0.1, n_iter = 1, compute_fim = FALSE
     ),
-    "misma longitud"
+    "same length"
   )
 })

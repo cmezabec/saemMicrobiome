@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibbmr.R
 \name{prepare_romero_zibbmr}
 \alias{prepare_romero_zibbmr}
-\title{Preparar datos tipo Romero para ZIBBMR}
+\title{Prepare Romero-type data for ZIBBMR}
 \usage{
 prepare_romero_zibbmr(
   romero,
@@ -11,27 +11,25 @@ prepare_romero_zibbmr(
 )
 }
 \arguments{
-\item{romero}{Una lista con elementos \code{SampleData} y \code{OTU}, ver
+\item{romero}{A list with elements \code{SampleData} and \code{OTU}, see
 \code{\link[=prepare_romero_zibr]{prepare_romero_zibr()}}.}
 
-\item{taxa_out}{Indices de columnas de taxones a excluir explicitamente
-tras el filtro por proporcion de ceros.}
+\item{taxa_out}{Indices of taxon columns to exclude explicitly after the
+zero-proportion filter.}
 
-\item{zero_range}{Vector de largo 2 con el rango \verb{[min, max]} de
-proporcion de ceros permitido para retener un taxon (calculado sobre los
-conteos crudos).}
+\item{zero_range}{Length-2 vector with the \verb{[min, max]} range of zero
+proportion allowed to retain a taxon (computed on the raw counts).}
 }
 \value{
-Una lista con \code{data} (covariables + conteos de los taxones
-retenidos), \code{taxa}, \code{covariates}, \code{counts}, \code{taxa_removed} y
-\code{zero_range}.
+A list with \code{data} (covariates + counts of the retained taxa),
+\code{taxa}, \code{covariates}, \code{counts}, \code{taxa_removed} and \code{zero_range}.
 }
 \description{
-Analogo de \code{\link[=prepare_romero_zibr]{prepare_romero_zibr()}}, pero conserva los conteos crudos por
-taxon (en vez de convertirlos a abundancia relativa), listos para usarse
-con \code{\link[=fit_zibbmr]{fit_zibbmr()}}/\code{\link[=fit_zibbmr_taxon]{fit_zibbmr_taxon()}} junto con la columna
-\code{Total.Read.Counts} como profundidad de secuenciacion.
+Analogue of \code{\link[=prepare_romero_zibr]{prepare_romero_zibr()}}, but keeps the raw per-taxon counts
+(instead of converting them to relative abundance), ready to use with
+\code{\link[=fit_zibbmr]{fit_zibbmr()}}/\code{\link[=fit_zibbmr_taxon]{fit_zibbmr_taxon()}} together with the \code{Total.Read.Counts}
+column as sequencing depth.
 }
 \seealso{
-\code{\link[=prepare_romero_zibr]{prepare_romero_zibr()}} para la version en proporciones (ZIBR).
+\code{\link[=prepare_romero_zibr]{prepare_romero_zibr()}} for the proportion version (ZIBR).
 }

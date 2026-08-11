@@ -2,43 +2,42 @@
 % Please edit documentation in R/zibbmr.R
 \name{plot.zibbmr_saem}
 \alias{plot.zibbmr_saem}
-\title{Graficos de un ajuste ZIBBMR}
+\title{Plots of a ZIBBMR fit}
 \usage{
 \method{plot}{zibbmr_saem}(
   x,
-  which = c("convergencia", "coeficientes", "aleatorios", "ajuste", "residuos"),
+  which = c("convergence", "coefficients", "random", "fit", "residuals"),
   ...
 )
 }
 \arguments{
-\item{x}{Un objeto \code{zibbmr_saem}, resultado de \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
+\item{x}{A \code{zibbmr_saem} object, the result of \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
 
-\item{which}{Tipo de grafico: \code{"convergencia"}, \code{"coeficientes"},
-\code{"aleatorios"}, \code{"ajuste"} o \code{"residuos"}.}
+\item{which}{Type of plot: \code{"convergence"}, \code{"coefficients"}, \code{"random"},
+\code{"fit"} or \code{"residuals"}.}
 
-\item{...}{Argumentos adicionales (no usados por ahora).}
+\item{...}{Additional arguments (unused for now).}
 }
 \value{
-\code{x}, de forma invisible. Se llama por su efecto secundario de
-graficar.
+\code{x}, invisibly. Called for its side effect of plotting.
 }
 \description{
-Analogo a \code{\link[=plot.zibr_saem]{plot.zibr_saem()}}; genera distintos graficos segun \code{which}:
+Analogous to \code{\link[=plot.zibr_saem]{plot.zibr_saem()}}; produces different plots depending on
+\code{which}:
 \describe{
-\item{\code{"convergencia"}}{(por defecto) traza iteracion-a-iteracion de los
-parametros, para revisar la convergencia del algoritmo SAEM.}
-\item{\code{"coeficientes"}}{coeficientes estimados con su intervalo de
-confianza al 95\%. Requiere \code{compute_fim = TRUE} para mostrar los
-intervalos.}
-\item{\code{"aleatorios"}}{distribucion entre sujetos de los efectos aleatorios
-estimados; la linea roja marca la media poblacional.}
-\item{\code{"ajuste"}}{observados frente a predichos de la parte continua, en las
-observaciones positivas (el conteo esperado dado presencia, \code{u * S}), con
-la recta \code{y = x} de referencia.}
-\item{\code{"residuos"}}{residuos de la parte continua (observado menos predicho
-individual, en observaciones positivas): su dispersion contra el valor
-predicho y su distribucion.}
+\item{\code{"convergence"}}{(default) iteration-by-iteration trace of the
+parameters, to check the convergence of the SAEM algorithm.}
+\item{\code{"coefficients"}}{estimated coefficients with their 95\% confidence
+interval. Requires \code{compute_fim = TRUE} to show the intervals.}
+\item{\code{"random"}}{between-subject distribution of the estimated random
+effects; the red line marks the population mean.}
+\item{\code{"fit"}}{observed vs. predicted for the continuous part, on the
+positive observations (the expected count given presence, \code{u * S}), with
+the reference line \code{y = x}.}
+\item{\code{"residuals"}}{residuals of the continuous part (observed minus
+individual predicted, on positive observations): their spread against
+the predicted value and their distribution.}
 }
-Los graficos \code{"ajuste"} y \code{"residuos"} usan los datos originales que el
-ajuste guarda.
+The \code{"fit"} and \code{"residuals"} plots use the original data that the fit
+stores.
 }

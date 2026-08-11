@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibr.R
 \name{prepare_romero_zibr}
 \alias{prepare_romero_zibr}
-\title{Preparar datos tipo Romero para ZIBR}
+\title{Prepare Romero-type data for ZIBR}
 \usage{
 prepare_romero_zibr(
   romero,
@@ -11,29 +11,29 @@ prepare_romero_zibr(
 )
 }
 \arguments{
-\item{romero}{Una lista con elementos \code{SampleData} (covariables por
-muestra, incluyendo \code{Age}, \code{Subect_ID}, \code{pregnant}, \code{GA_Days},
-\code{Total.Read.Counts}) y \code{OTU} (matriz o data frame de conteos por taxon,
-mismo numero de filas que \code{SampleData}).}
+\item{romero}{A list with elements \code{SampleData} (per-sample covariates,
+including \code{Age}, \code{Subect_ID}, \code{pregnant}, \code{GA_Days}, \code{Total.Read.Counts})
+and \code{OTU} (matrix or data frame of counts per taxon, same number of rows
+as \code{SampleData}).}
 
-\item{taxa_out}{Indices de columnas de taxones a excluir explicitamente
-tras el filtro por proporcion de ceros.}
+\item{taxa_out}{Indices of taxon columns to exclude explicitly after the
+zero-proportion filter.}
 
-\item{zero_range}{Vector de largo 2 con el rango \verb{[min, max]} de
-proporcion de ceros permitido para retener un taxon.}
+\item{zero_range}{Length-2 vector with the \verb{[min, max]} range of zero
+proportion allowed to retain a taxon.}
 }
 \value{
-Una lista con \code{data} (covariables + abundancias relativas de los
-taxones retenidos), \code{taxa} (nombres de esos taxones), \code{covariates},
-\code{abundances}, \code{taxa_removed} y \code{zero_range}.
+A list with \code{data} (covariates + relative abundances of the
+retained taxa), \code{taxa} (names of those taxa), \code{covariates}, \code{abundances},
+\code{taxa_removed} and \code{zero_range}.
 }
 \description{
-Toma una lista con datos de microbioma en el formato del estudio Romero
-(con elementos \code{SampleData} y \code{OTU}) y construye covariables estandar
-(tiempo de gestacion escalado, edad escalada, interaccion tiempo-embarazo)
-junto con abundancias relativas filtradas por proporcion de ceros, listas
-para usarse con \code{\link[=fit_zibr]{fit_zibr()}}/\code{\link[=fit_zibr_taxon]{fit_zibr_taxon()}}.
+Takes a list with microbiome data in the format of the Romero study (with
+elements \code{SampleData} and \code{OTU}) and builds standard covariates (scaled
+gestational time, scaled age, time-pregnancy interaction) together with
+relative abundances filtered by zero proportion, ready to use with
+\code{\link[=fit_zibr]{fit_zibr()}}/\code{\link[=fit_zibr_taxon]{fit_zibr_taxon()}}.
 }
 \seealso{
-\code{\link[=prepare_romero_zibbmr]{prepare_romero_zibbmr()}} para la version en conteos (ZIBBMR).
+\code{\link[=prepare_romero_zibbmr]{prepare_romero_zibbmr()}} for the count version (ZIBBMR).
 }

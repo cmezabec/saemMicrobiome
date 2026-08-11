@@ -2,19 +2,19 @@
 % Please edit documentation in R/zibr.R
 \name{vcov.zibr_saem}
 \alias{vcov.zibr_saem}
-\title{Matriz de varianza-covarianza de un ajuste ZIBR}
+\title{Variance-covariance matrix of a ZIBR fit}
 \usage{
 \method{vcov}{zibr_saem}(object, ...)
 }
 \arguments{
-\item{object}{Un objeto \code{zibr_saem} ajustado con \code{compute_fim = TRUE}.}
+\item{object}{A \code{zibr_saem} object fitted with \code{compute_fim = TRUE}.}
 
-\item{...}{No usado, por compatibilidad con el generico \code{\link[stats:vcov]{stats::vcov()}}.}
+\item{...}{Unused, for compatibility with the \code{\link[stats:vcov]{stats::vcov()}} generic.}
 }
 \value{
-Una matriz de varianza-covarianza.
+A variance-covariance matrix.
 }
 \description{
-Calcula la inversa de la matriz de informacion de Fisher estocastica
-(\code{fisher_stoch}), estimada durante el ajuste SAEM.
+Computes the inverse of the stochastic Fisher information matrix
+(\code{fisher_stoch}), estimated during the SAEM fit.
 }

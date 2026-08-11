@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibbmr.R
 \name{zibbmr_results_table}
 \alias{zibbmr_results_table}
-\title{Tabla resumen de tres comparaciones LRT tipicas para ZIBBMR}
+\title{Summary table of three typical LRT comparisons for ZIBBMR}
 \usage{
 zibbmr_results_table(
   species,
@@ -16,23 +16,23 @@ zibbmr_results_table(
 )
 }
 \arguments{
-\item{species}{Vector de nombres/etiquetas para cada taxon.}
+\item{species}{Vector of names/labels for each taxon.}
 
-\item{mod1_full, mod1_no_preg}{Listas de modelos ZIBBMR para la primera
-comparacion, uno por taxon.}
+\item{mod1_full, mod1_no_preg}{Lists of ZIBBMR models for the first
+comparison, one per taxon.}
 
-\item{mod2_full, mod2_no_preg, mod2_no_inter}{Listas de modelos ZIBBMR para
-la segunda comparacion y la prueba de interaccion, uno por taxon.}
+\item{mod2_full, mod2_no_preg, mod2_no_inter}{Lists of ZIBBMR models for the
+second comparison and the interaction test, one per taxon.}
 
-\item{df}{Grados de libertad usados en las tres pruebas.}
+\item{df}{Degrees of freedom used in the three tests.}
 
-\item{alpha}{Nivel de significancia usado para las columnas \verb{Detec_*}.}
+\item{alpha}{Significance level used for the \verb{Detec_*} columns.}
 }
 \value{
-Un data frame con una fila por taxon.
+A data frame with one row per taxon.
 }
 \description{
-Analogo de \code{\link[=zibr_results_table]{zibr_results_table()}} para modelos ZIBBMR.
+Analogue of \code{\link[=zibr_results_table]{zibr_results_table()}} for ZIBBMR models.
 }
 \seealso{
 \code{\link[=zibr_results_table]{zibr_results_table()}}

@@ -2,45 +2,44 @@
 % Please edit documentation in R/zibr.R
 \name{plot.zibr_saem}
 \alias{plot.zibr_saem}
-\title{Graficos de un ajuste ZIBR}
+\title{Plots of a ZIBR fit}
 \usage{
 \method{plot}{zibr_saem}(
   x,
-  which = c("convergencia", "coeficientes", "aleatorios", "ajuste", "residuos"),
+  which = c("convergence", "coefficients", "random", "fit", "residuals"),
   ...
 )
 }
 \arguments{
-\item{x}{Un objeto \code{zibr_saem}, resultado de \code{\link[=fit_zibr]{fit_zibr()}}.}
+\item{x}{A \code{zibr_saem} object, the result of \code{\link[=fit_zibr]{fit_zibr()}}.}
 
-\item{which}{Tipo de grafico: \code{"convergencia"}, \code{"coeficientes"},
-\code{"aleatorios"}, \code{"ajuste"} o \code{"residuos"}.}
+\item{which}{Type of plot: \code{"convergence"}, \code{"coefficients"}, \code{"random"},
+\code{"fit"} or \code{"residuals"}.}
 
-\item{...}{Argumentos adicionales (no usados por ahora).}
+\item{...}{Additional arguments (unused for now).}
 }
 \value{
-\code{x}, de forma invisible. Se llama por su efecto secundario de
-graficar.
+\code{x}, invisibly. Called for its side effect of plotting.
 }
 \description{
-Genera distintos graficos de diagnostico/resultado segun \code{which}:
+Produces different diagnostic/result plots depending on \code{which}:
 \describe{
-\item{\code{"convergencia"}}{(por defecto) traza iteracion-a-iteracion de los
-parametros, para revisar la convergencia del algoritmo SAEM.}
-\item{\code{"coeficientes"}}{coeficientes estimados con su intervalo de
-confianza al 95\% (tipo forest plot). Requiere haber ajustado con
-\code{compute_fim = TRUE} para mostrar los intervalos.}
-\item{\code{"aleatorios"}}{distribucion entre sujetos de los efectos aleatorios
-estimados (uno por sujeto); la linea roja marca la media poblacional.}
-\item{\code{"ajuste"}}{observados frente a predichos de la parte continua, en
-las observaciones positivas (donde el taxon esta presente), con la recta
-\code{y = x} de referencia. Se enfoca en la parte continua porque en un modelo
-con inflacion de ceros la prediccion marginal mezcla la masa en cero.}
-\item{\code{"residuos"}}{residuos de la parte continua (observado menos predicho
-individual, en observaciones positivas): su dispersion contra el valor
-predicho y su distribucion.}
+\item{\code{"convergence"}}{(default) iteration-by-iteration trace of the
+parameters, to check the convergence of the SAEM algorithm.}
+\item{\code{"coefficients"}}{estimated coefficients with their 95\% confidence
+interval (forest-plot style). Requires fitting with
+\code{compute_fim = TRUE} to show the intervals.}
+\item{\code{"random"}}{between-subject distribution of the estimated random
+effects (one per subject); the red line marks the population mean.}
+\item{\code{"fit"}}{observed vs. predicted for the continuous part, on the
+positive observations (where the taxon is present), with the reference
+line \code{y = x}. It focuses on the continuous part because in a
+zero-inflated model the marginal prediction mixes the mass at zero.}
+\item{\code{"residuals"}}{residuals of the continuous part (observed minus
+individual predicted, on positive observations): their spread against
+the predicted value and their distribution.}
 }
-Los graficos \code{"ajuste"} y \code{"residuos"} usan los datos originales que el
-ajuste guarda; solo estan disponibles para ajustes hechos con una version
-del paquete que los almacena.
+The \code{"fit"} and \code{"residuals"} plots use the original data that the fit
+stores; they are only available for fits made with a version of the package
+that stores them.
 }

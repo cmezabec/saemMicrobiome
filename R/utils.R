@@ -1,7 +1,7 @@
-#### Utilidades internas compartidas por ZIBR y ZIBBMR ####
-#### Estas funciones no dependen de la verosimilitud de cada modelo: ####
-#### construccion de matrices de diseno, predictor lineal logistico, ####
-#### replicacion de cadenas MCMC y verificacion de paquetes requeridos. ####
+#### Internal utilities shared by ZIBR and ZIBBMR ####
+#### These functions do not depend on each model's likelihood: ####
+#### design-matrix construction, logistic linear predictor, ####
+#### MCMC chain replication and required-package checks. ####
 
 .saem_check_packages <- function(inference = TRUE) {
   required <- "MASS"
@@ -13,9 +13,9 @@
 
   if (length(missing) > 0) {
     stop(
-      "Faltan paquetes requeridos: ",
+      "Missing required packages: ",
       paste(missing, collapse = ", "),
-      ". Instala antes de ajustar el modelo.",
+      ". Install them before fitting the model.",
       call. = FALSE
     )
   }
@@ -29,67 +29,67 @@
   }
 }
 
-# Inversa de la matriz de covarianza de los efectos aleatorios.
+# Inverse of the random-effect covariance matrix.
 #
-# La version anterior calculaba diag(1 / diag(G)), es decir invertia G
-# descartando los terminos fuera de la diagonal. Con G diagonal el resultado es
-# el mismo, pero el paso M del SAEM estima la matriz COMPLETA (ver el calculo de
-# `G_full` en zibbmr.R y zibr.R), de modo que en cuanto los efectos aleatorios
-# de las dos partes del modelo estan correlacionados la precision quedaba mal.
+# The previous version computed diag(1 / diag(G)), i.e. it inverted G
+# discarding the off-diagonal terms. With diagonal G the result is the same,
+# but the SAEM M-step estimates the FULL matrix (see the computation of
+# `G_full` in zibbmr.R and zibr.R), so as soon as the random effects of the
+# two model parts are correlated the precision came out wrong.
 #
-# Esto afectaba la razon de aceptacion de Metropolis-Hastings, que evaluaba la
-# densidad previa como si los efectos aleatorios fueran independientes: las
-# trazas salian sin correlacion, la covarianza acumulada no crecia y G volvia a
-# ser casi diagonal en la iteracion siguiente. Resultado: un punto fijo
-# autoreforzado con rho ~ 0 (con rho verdadero 0.7 se estimaba ~0.09). Tambien
-# afectaba la verosimilitud marginal por importance sampling, y con ella el LRT.
+# This affected the Metropolis-Hastings acceptance ratio, which evaluated the
+# prior density as if the random effects were independent: the traces came out
+# uncorrelated, the accumulated covariance did not grow and G went back to
+# being almost diagonal at the next iteration. Result: a self-reinforcing fixed
+# point with rho ~ 0 (with a true rho of 0.7 it estimated ~0.09). It also
+# affected the marginal likelihood via importance sampling, and with it the LRT.
 .saem_diag_inverse <- function(G) {
   G <- as.matrix(G)
 
-  inversa <- try(solve(G), silent = TRUE)
+  inverse <- try(solve(G), silent = TRUE)
 
-  # Si G es singular o esta mal condicionada (puede pasar en iteraciones
-  # tempranas del SAEM, antes de que las componentes de varianza se estabilicen)
-  # se recurre a la pseudo-inversa en vez de fallar.
-  if (inherits(inversa, "try-error")) {
-    descomposicion <- eigen(G, symmetric = TRUE)
-    positivos <- descomposicion$values >
-      max(1e-10, max(descomposicion$values) * 1e-10)
+  # If G is singular or ill-conditioned (which can happen in early SAEM
+  # iterations, before the variance components stabilize) we fall back to the
+  # pseudo-inverse instead of failing.
+  if (inherits(inverse, "try-error")) {
+    eig <- eigen(G, symmetric = TRUE)
+    positive <- eig$values >
+      max(1e-10, max(eig$values) * 1e-10)
 
-    if (!any(positivos)) {
-      stop("La matriz de covarianza de los efectos aleatorios es singular.",
+    if (!any(positive)) {
+      stop("The random-effect covariance matrix is singular.",
            call. = FALSE)
     }
 
-    inversa <- descomposicion$vectors[, positivos, drop = FALSE] %*%
-      diag(1 / descomposicion$values[positivos],
-           nrow = sum(positivos)) %*%
-      t(descomposicion$vectors[, positivos, drop = FALSE])
+    inverse <- eig$vectors[, positive, drop = FALSE] %*%
+      diag(1 / eig$values[positive],
+           nrow = sum(positive)) %*%
+      t(eig$vectors[, positive, drop = FALSE])
   }
 
-  inversa
+  inverse
 }
 
-# Impone la estructura pedida a la covarianza de los efectos aleatorios.
+# Imposes the requested structure on the random-effect covariance.
 #
-# "diag"          efectos aleatorios independientes entre las dos partes del
-#                 modelo. Es la especificacion del articulo y el valor por
-#                 defecto: con pocos sujetos u observaciones por sujeto, la
-#                 matriz sin restricciones degenera (rho -> +-1 y colapso de una
-#                 de las varianzas).
-# "unstructured"  covarianza libre. Habilita estimar la correlacion entre el
-#                 efecto aleatorio de la parte de inflacion de ceros y el de la
-#                 parte de abundancia, que ni glmmTMB ni gamlss pueden
-#                 representar. Requiere bastante mas informacion.
-.saem_impone_estructura <- function(G, estructura) {
-  if (identical(estructura, "diag")) {
+# "diag"          random effects independent between the two model parts. It
+#                 is the specification of the paper and the default: with few
+#                 subjects or observations per subject, the unrestricted
+#                 matrix degenerates (rho -> +-1 and collapse of one of the
+#                 variances).
+# "unstructured"  free covariance. Enables estimating the correlation between
+#                 the random effect of the zero-inflation part and that of the
+#                 abundance part, which neither glmmTMB nor gamlss can
+#                 represent. Requires substantially more information.
+.saem_impose_structure <- function(G, structure) {
+  if (identical(structure, "diag")) {
     return(.saem_diag(diag(as.matrix(G))))
   }
   as.matrix(G)
 }
 
-.saem_valida_estructura <- function(estructura) {
-  match.arg(estructura, c("diag", "unstructured"))
+.saem_validate_structure <- function(structure) {
+  match.arg(structure, c("diag", "unstructured"))
 }
 
 .saem_covariate_matrix <- function(x, n, prefix) {
@@ -98,7 +98,7 @@
   } else {
     mat <- as.matrix(x)
     if (nrow(mat) != n) {
-      stop("La matriz de covariables no tiene el mismo numero de filas que Y.", call. = FALSE)
+      stop("The covariate matrix does not have the same number of rows as Y.", call. = FALSE)
     }
   }
 
@@ -120,17 +120,17 @@
 }
 
 .saem_linear_prob <- function(psi, cols, id, design) {
-  # El predictor lineal se calcula en C++ (evita materializar psi[id, cols] y
-  # el rowSums); plogis() se aplica en R (vectorizado) para que el resultado
-  # sea byte-identico al de la version en R puro.
+  # The linear predictor is computed in C++ (avoids materializing psi[id, cols]
+  # and the rowSums); plogis() is applied in R (vectorized) so the result is
+  # byte-identical to the pure-R version.
   eta <- saem_linear_eta_cpp(psi, as.integer(cols), as.integer(id), design)
   plogis(eta)
 }
 
 
-#### Parte de inflacion de ceros: identica para ZIBR y ZIBBMR ####
-#### (la probabilidad de presencia/ausencia no depende de si la parte ####
-#### positiva es beta o beta-binomial) ####
+#### Zero-inflation part: identical for ZIBR and ZIBBMR ####
+#### (the presence/absence probability does not depend on whether the ####
+#### positive part is beta or beta-binomial) ####
 
 .saem_neg_loglik_zero <- function(alpha_fixed, psi_chain, alpha_random,
                                   x_design_chain, id_chain, is_positive_chain,
@@ -151,9 +151,9 @@
 }
 
 
-#### Extraccion de log-verosimilitud y comparacion de modelos anidados (LRT) ####
-#### Comun a ambos modelos: solo dependen de que el objeto tenga $loglik ####
-#### o un metodo logLik() generico. ####
+#### Log-likelihood extraction and nested-model comparison (LRT) ####
+#### Common to both models: they only depend on the object having $loglik ####
+#### or a generic logLik() method. ####
 
 .saem_extract_loglik <- function(model) {
   if (inherits(model, c("zibr_saem", "zibbmr_saem"))) {
@@ -179,7 +179,7 @@
 
 .saem_lrt_table <- function(full_models, reduced_models, species, df, alpha, lrt_fn) {
   if (length(full_models) != length(reduced_models)) {
-    stop("full_models y reduced_models deben tener la misma longitud.", call. = FALSE)
+    stop("full_models and reduced_models must have the same length.", call. = FALSE)
   }
 
   if (is.null(species) || length(species) == 0) {
@@ -231,11 +231,11 @@
 }
 
 
-#### Metodos S3: la mecanica de imprimir/graficar/extraer coeficientes es ####
-#### identica para zibr_saem y zibbmr_saem; solo cambian etiquetas de texto ####
+#### S3 methods: the mechanics of printing/plotting/extracting coefficients ####
+#### are identical for zibr_saem and zibbmr_saem; only the text labels change ####
 
 .saem_print <- function(x, model_label, beta_label) {
-  cat("===== Resultados ", model_label, " =====\n", sep = "")
+  cat("===== Results ", model_label, " =====\n", sep = "")
 
   if (x$zi) {
     alpha <- x$mu[seq_len(x$n_alpha)]
@@ -253,7 +253,7 @@
       alpha_tab[, "sqrt.Var"] <- sqrt(alpha_tab[, "Variance"])
     }
 
-    cat("== Parte logistica: p_it ==\n")
+    cat("== Logistic part: p_it ==\n")
     print(alpha_tab[, c("Estimate", "Type")])
   } else {
     n_alpha_random <- 0
@@ -277,9 +277,9 @@
   cat("== ", beta_label, ": u_it ==\n", sep = "")
   print(beta_tab[, c("Estimate", "Type")])
 
-  cat("=== Varianzas de efectos aleatorios ===\n")
+  cat("=== Random-effect variances ===\n")
   if (x$zi && n_alpha_random > 0) {
-    cat("== Parte logistica ==\n")
+    cat("== Logistic part ==\n")
     print(alpha_tab[x$alpha_random, c("Variance", "sqrt.Var"), drop = FALSE])
   }
   if (n_beta_random > 0) {
@@ -288,22 +288,22 @@
   }
 
   cat("=== Phi: ", x$phi, "\n", sep = "")
-  cat("=== Log-verosimilitud marginal (importance sampling): ", x$loglik, "\n", sep = "")
+  cat("=== Marginal log-likelihood (importance sampling): ", x$loglik, "\n", sep = "")
 
   invisible(x)
 }
 
-## Etiquetas de los parametros de efectos fijos (parte logistica + parte
-## beta/beta-binomial), en el mismo orden que x$mu.
+## Labels of the fixed-effect parameters (logistic part + beta/beta-binomial
+## part), in the same order as x$mu.
 .saem_param_labels <- function(x, beta_label = "beta") {
   labs <- character(0)
   if (isTRUE(x$zi) && x$n_alpha > 0) {
-    labs <- paste0("logistica: ", x$alpha_labels)
+    labs <- paste0("logistic: ", x$alpha_labels)
   }
   c(labs, paste0(beta_label, ": ", x$beta_labels))
 }
 
-## Grafico 1: traza de convergencia (parametros a lo largo de las iteraciones).
+## Plot 1: convergence trace (parameters across the iterations).
 .saem_plot_trace <- function(x, ...) {
   trace <- x$trace
   n_iter <- nrow(trace)
@@ -320,8 +320,8 @@
       seq_len(n_iter),
       trace[, j],
       type = "l",
-      xlab = "Iteracion",
-      ylab = "Valor",
+      xlab = "Iteration",
+      ylab = "Value",
       main = colnames(trace)[j]
     )
     graphics::abline(v = burn_in, lty = 2)
@@ -330,8 +330,8 @@
   invisible(x)
 }
 
-## Grafico 2: coeficientes estimados con intervalo de confianza al 95%
-## (tipo "forest plot"). Necesita el ajuste con compute_fim = TRUE para los IC.
+## Plot 2: estimated coefficients with 95% confidence interval (forest-plot
+## style). Needs the fit with compute_fim = TRUE for the CIs.
 .saem_plot_coef <- function(x, beta_label = "beta") {
   est <- x$mu
   labs <- .saem_param_labels(x, beta_label)
@@ -351,29 +351,29 @@
 
   xr <- range(c(est, lo, hi, 0), na.rm = TRUE)
   graphics::plot(est, seq_len(n), xlim = xr, ylim = c(0.5, n + 0.5), yaxt = "n",
-                 xlab = "Estimado (IC 95%)", ylab = "", pch = 19,
-                 main = "Coeficientes estimados")
+                 xlab = "Estimate (95% CI)", ylab = "", pch = 19,
+                 main = "Estimated coefficients")
   graphics::axis(2, at = seq_len(n), labels = labs, las = 1, cex.axis = 0.85)
   graphics::abline(v = 0, lty = 2, col = "gray50")
   ok <- !is.na(lo)
   if (any(ok)) graphics::segments(lo[ok], which(ok), hi[ok], which(ok), lwd = 2)
   if (!all(ok)) {
-    aviso <- if (is.null(x$fisher_stoch)) {
-      "Sin IC: reajusta con compute_fim = TRUE"
+    note <- if (is.null(x$fisher_stoch)) {
+      "No CI: refit with compute_fim = TRUE"
     } else {
-      "IC no disponible para algun coeficiente (matriz de informacion mal condicionada)"
+      "CI not available for some coefficient (ill-conditioned information matrix)"
     }
-    graphics::mtext(aviso, side = 1, line = 2.5, cex = 0.75, col = "gray40")
+    graphics::mtext(note, side = 1, line = 2.5, cex = 0.75, col = "gray40")
   }
   invisible(x)
 }
 
-## Grafico 3: distribucion entre sujetos de los efectos aleatorios estimados
-## (uno por sujeto). La linea roja marca la media poblacional.
+## Plot 3: between-subject distribution of the estimated random effects (one
+## per subject). The red line marks the population mean.
 .saem_plot_random <- function(x, beta_label = "beta") {
   ri <- x$random_index
   if (length(ri) == 0) {
-    message("El ajuste no tiene efectos aleatorios que graficar.")
+    message("The fit has no random effects to plot.")
     return(invisible(x))
   }
   labs <- .saem_param_labels(x, beta_label)[ri]
@@ -384,42 +384,42 @@
   on.exit(graphics::par(old_par), add = TRUE)
   graphics::par(mfrow = c(1, k))
   for (j in seq_len(k)) {
-    graphics::hist(vals[, j], main = labs[j], xlab = "Valor por sujeto",
+    graphics::hist(vals[, j], main = labs[j], xlab = "Value per subject",
                    col = "#92c5de", border = "white")
     graphics::abline(v = x$mu[ri[j]], col = "red", lwd = 2)
   }
   invisible(x)
 }
 
-## Predicciones de la PARTE CONTINUA del modelo (la magnitud dado que el taxon
-## esta presente), usando los datos originales que el ajuste guarda en `x$data`.
-## Se enfoca en la parte continua -no en la marginal E[Y] = p * u- porque en un
-## modelo con inflacion de ceros la prediccion marginal mezcla la masa de
-## probabilidad en cero con la parte continua y no se lee como un diagrama
-## observado-vs-predicho clasico. La media condicional dado presencia es:
-##   ZIBR   : u   (la media de la parte beta, en [0, 1))
-##   ZIBBMR : u * S (el conteo esperado dado presencia, con S = total de lecturas)
-## Devuelve tambien `is_positive` para restringir a las observaciones donde el
-## taxon esta presente, y las versiones poblacional (solo `mu`) e individual
-## (efectos por sujeto, `psi_mean`).
+## Predictions of the CONTINUOUS PART of the model (the magnitude given that
+## the taxon is present), using the original data that the fit stores in
+## `x$data`. It focuses on the continuous part -not the marginal E[Y] = p * u-
+## because in a zero-inflated model the marginal prediction mixes the point
+## mass at zero with the continuous part and does not read like a classic
+## observed-vs-predicted plot. The conditional mean given presence is:
+##   ZIBR   : u   (the mean of the beta part, in [0, 1))
+##   ZIBBMR : u * S (the expected count given presence, with S = total reads)
+## It also returns `is_positive` to restrict to the observations where the
+## taxon is present, and the population (only `mu`) and individual (per-subject
+## effects, `psi_mean`) versions.
 .saem_predict <- function(x) {
   d <- x$data
   if (is.null(d)) {
-    stop("Este ajuste no guardo los datos originales (fue creado con una version ",
-         "anterior del paquete). Vuelve a ajustar el modelo para usar estos graficos.",
+    stop("This fit did not store the original data (it was created with an ",
+         "older version of the package). Refit the model to use these plots.",
          call. = FALSE)
   }
   id <- d$subject_id
   n_subjects <- nrow(x$psi_mean)
   beta_cols <- x$n_alpha + seq_len(x$n_beta)
 
-  # psi poblacional: todas las filas iguales a mu (sin desviaciones por sujeto)
+  # population psi: all rows equal to mu (no per-subject deviations)
   psi_pop <- matrix(x$mu, nrow = n_subjects, ncol = length(x$mu), byrow = TRUE)
 
   u_ind <- .saem_linear_prob(x$psi_mean, beta_cols, id, d$z_design)
   u_pop <- .saem_linear_prob(psi_pop,    beta_cols, id, d$z_design)
 
-  mult <- if (!is.null(d$S)) d$S else 1  # ZIBBMR: total de lecturas por muestra
+  mult <- if (!is.null(d$S)) d$S else 1  # ZIBBMR: total reads per sample
 
   list(
     observed    = d$y,
@@ -429,14 +429,14 @@
   )
 }
 
-## Grafico 4: observados vs. predichos de la parte continua, usando solo las
-## observaciones positivas (donde el taxon esta presente). Muestra la prediccion
-## poblacional e individual; la recta roja y = x marca el ajuste perfecto.
+## Plot 4: observed vs. predicted for the continuous part, using only the
+## positive observations (where the taxon is present). Shows the population and
+## individual predictions; the red y = x line marks a perfect fit.
 .saem_plot_fit <- function(x) {
   pr <- .saem_predict(x)
   pos <- pr$is_positive
   if (!any(pos)) {
-    message("No hay observaciones positivas que graficar.")
+    message("There are no positive observations to plot.")
     return(invisible(x))
   }
   obs <- pr$observed[pos]; pi <- pr$pred_ind[pos]; pp <- pr$pred_pop[pos]
@@ -446,26 +446,26 @@
   on.exit(graphics::par(old_par), add = TRUE)
 
   graphics::plot(pp, obs, xlim = rng, ylim = rng,
-                 xlab = "Predicho (parte continua)", ylab = "Observado",
-                 main = "Observados vs. predichos\n(observaciones positivas)",
+                 xlab = "Predicted (continuous part)", ylab = "Observed",
+                 main = "Observed vs. predicted\n(positive observations)",
                  pch = 1, col = grDevices::adjustcolor("gray40", 0.5))
   graphics::points(pi, obs, pch = 19, col = grDevices::adjustcolor("#2166ac", 0.5))
   graphics::abline(0, 1, col = "red", lwd = 2)
   graphics::legend("topleft", bty = "n",
                    pch = c(1, 19, NA), lty = c(NA, NA, 1), lwd = c(NA, NA, 2),
                    col = c("gray40", "#2166ac", "red"),
-                   legend = c("poblacional", "individual", "y = x"), cex = 0.85)
+                   legend = c("population", "individual", "y = x"), cex = 0.85)
   invisible(x)
 }
 
-## Grafico 5: residuos de la parte continua (observado - predicho individual),
-## en las observaciones positivas. Dos paneles: residuos contra el valor
-## predicho, y su distribucion. La referencia roja marca el 0.
+## Plot 5: residuals of the continuous part (observed - individual predicted),
+## on the positive observations. Two panels: residuals against the predicted
+## value, and their distribution. The red reference marks 0.
 .saem_plot_resid <- function(x) {
   pr <- .saem_predict(x)
   pos <- pr$is_positive
   if (!any(pos)) {
-    message("No hay observaciones positivas que graficar.")
+    message("There are no positive observations to plot.")
     return(invisible(x))
   }
   pred <- pr$pred_ind[pos]
@@ -475,28 +475,28 @@
   on.exit(graphics::par(old_par), add = TRUE)
   graphics::par(mfrow = c(1, 2))
 
-  graphics::plot(pred, resid, xlab = "Predicho (parte continua)",
-                 ylab = "Residuo (obs - pred)", main = "Residuos vs. predicho",
+  graphics::plot(pred, resid, xlab = "Predicted (continuous part)",
+                 ylab = "Residual (obs - pred)", main = "Residuals vs. predicted",
                  pch = 19, col = grDevices::adjustcolor("black", 0.4))
   graphics::abline(h = 0, col = "red", lwd = 2)
 
-  graphics::hist(resid, main = "Distribucion de residuos", xlab = "Residuo",
+  graphics::hist(resid, main = "Distribution of residuals", xlab = "Residual",
                  col = "#92c5de", border = "white")
   graphics::abline(v = 0, col = "red", lwd = 2)
   invisible(x)
 }
 
-## Despachador de graficos usado por plot.zibr_saem / plot.zibbmr_saem.
-.saem_plot <- function(x, which = c("convergencia", "coeficientes", "aleatorios",
-                                    "ajuste", "residuos"),
+## Plot dispatcher used by plot.zibr_saem / plot.zibbmr_saem.
+.saem_plot <- function(x, which = c("convergence", "coefficients", "random",
+                                    "fit", "residuals"),
                        beta_label = "beta", ...) {
   which <- match.arg(which)
   switch(which,
-    convergencia = .saem_plot_trace(x, ...),
-    coeficientes = .saem_plot_coef(x, beta_label),
-    aleatorios   = .saem_plot_random(x, beta_label),
-    ajuste       = .saem_plot_fit(x),
-    residuos     = .saem_plot_resid(x))
+    convergence  = .saem_plot_trace(x, ...),
+    coefficients = .saem_plot_coef(x, beta_label),
+    random       = .saem_plot_random(x, beta_label),
+    fit          = .saem_plot_fit(x),
+    residuals    = .saem_plot_resid(x))
 }
 
 .saem_logLik <- function(object) {
@@ -513,7 +513,7 @@
 
 .saem_vcov <- function(object) {
   if (is.null(object$fisher_stoch)) {
-    stop("El ajuste no contiene matriz FIM. Reajusta con compute_fim = TRUE.", call. = FALSE)
+    stop("The fit does not contain a FIM matrix. Refit with compute_fim = TRUE.", call. = FALSE)
   }
 
   -solve(object$fisher_stoch)

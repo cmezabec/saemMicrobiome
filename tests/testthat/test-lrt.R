@@ -2,7 +2,7 @@ mock_fit <- function(loglik, class) {
   structure(list(loglik = loglik), class = class)
 }
 
-test_that("lrt_zibr calcula el estadistico y p-valor correctos", {
+test_that("lrt_zibr computes the correct statistic and p-value", {
   full <- mock_fit(-100, "zibr_saem")
   reduced <- mock_fit(-105, "zibr_saem")
 
@@ -14,7 +14,7 @@ test_that("lrt_zibr calcula el estadistico y p-valor correctos", {
   expect_equal(res$p_value, stats::pchisq(res$LRT, df = 2, lower.tail = FALSE))
 })
 
-test_that("lrt_zibbmr calcula el estadistico y p-valor correctos", {
+test_that("lrt_zibbmr computes the correct statistic and p-value", {
   full <- mock_fit(-200, "zibbmr_saem")
   reduced <- mock_fit(-210, "zibbmr_saem")
 
@@ -24,7 +24,7 @@ test_that("lrt_zibbmr calcula el estadistico y p-valor correctos", {
   expect_equal(res$df, 1)
 })
 
-test_that("lrt_zibr_table arma una fila por especie y marca Detected correctamente", {
+test_that("lrt_zibr_table builds one row per species and flags Detected correctly", {
   full_models <- list(sp1 = mock_fit(-100, "zibr_saem"), sp2 = mock_fit(-50, "zibr_saem"))
   reduced_models <- list(sp1 = mock_fit(-105, "zibr_saem"), sp2 = mock_fit(-50.001, "zibr_saem"))
 
@@ -36,17 +36,17 @@ test_that("lrt_zibr_table arma una fila por especie y marca Detected correctamen
   expect_false(tab$Detected[2])
 })
 
-test_that("lrt_zibr_table exige listas de la misma longitud", {
+test_that("lrt_zibr_table requires lists of the same length", {
   expect_error(
     lrt_zibr_table(
       list(mock_fit(-1, "zibr_saem")),
       list(mock_fit(-1, "zibr_saem"), mock_fit(-2, "zibr_saem"))
     ),
-    "misma longitud"
+    "same length"
   )
 })
 
-test_that("lrt_zibr acepta cualquier objeto con metodo logLik() (no solo zibr_saem)", {
+test_that("lrt_zibr accepts any object with a logLik() method (not only zibr_saem)", {
   full <- lm(mpg ~ wt, data = mtcars)
   reduced <- mock_fit(as.numeric(stats::logLik(full)) - 5, "zibr_saem")
 
@@ -56,7 +56,7 @@ test_that("lrt_zibr acepta cualquier objeto con metodo logLik() (no solo zibr_sa
   expect_equal(res$LRT, 2 * 5)
 })
 
-test_that("zibr_results_table arma las tres comparaciones LRT", {
+test_that("zibr_results_table builds the three LRT comparisons", {
   species <- c("sp1", "sp2")
 
   tab <- zibr_results_table(
@@ -75,7 +75,7 @@ test_that("zibr_results_table arma las tres comparaciones LRT", {
   expect_false(tab$Detec_Preg1[2])
 })
 
-test_that("zibbmr_results_table arma las tres comparaciones LRT", {
+test_that("zibbmr_results_table builds the three LRT comparisons", {
   species <- c("sp1", "sp2")
 
   tab <- zibbmr_results_table(

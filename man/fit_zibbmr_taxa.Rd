@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibbmr.R
 \name{fit_zibbmr_taxa}
 \alias{fit_zibbmr_taxa}
-\title{Ajustar ZIBBMR para varios taxones de un data frame}
+\title{Fit ZIBBMR for several taxa of a data frame}
 \usage{
 fit_zibbmr_taxa(
   data,
@@ -21,34 +21,34 @@ fit_zibbmr_taxa(
 )
 }
 \arguments{
-\item{data}{Data frame con una fila por observacion.}
+\item{data}{Data frame with one row per observation.}
 
-\item{taxa}{Vector de nombres de columnas (taxones) a ajustar.}
+\item{taxa}{Vector of column names (taxa) to fit.}
 
-\item{covariates, x_covariates, z_covariates}{Ver \code{\link[=fit_zibbmr_taxon]{fit_zibbmr_taxon()}}.}
+\item{covariates, x_covariates, z_covariates}{See \code{\link[=fit_zibbmr_taxon]{fit_zibbmr_taxon()}}.}
 
-\item{total}{Nombre de la columna con el total de lecturas.}
+\item{total}{Name of the column with the total reads.}
 
-\item{id}{Nombre de la columna que identifica al sujeto.}
+\item{id}{Name of the column that identifies the subject.}
 
-\item{zi}{Logico, ver \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
+\item{zi}{Logical, see \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
 
-\item{seed}{Semilla aleatoria (se reutiliza para cada taxon).}
+\item{seed}{Random seed (reused for each taxon).}
 
-\item{n_iter}{Numero de iteraciones SAEM.}
+\item{n_iter}{Number of SAEM iterations.}
 
-\item{n_chains}{Numero de cadenas MCMC.}
+\item{n_chains}{Number of MCMC chains.}
 
-\item{compute_fim}{Logico, ver \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
+\item{compute_fim}{Logical, see \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
 
-\item{...}{Argumentos adicionales pasados a \code{\link[=fit_zibbmr_taxon]{fit_zibbmr_taxon()}}.}
+\item{...}{Additional arguments passed to \code{\link[=fit_zibbmr_taxon]{fit_zibbmr_taxon()}}.}
 }
 \value{
-Una lista de objetos \code{zibbmr_saem}, nombrada segun \code{taxa}.
+A list of \code{zibbmr_saem} objects, named according to \code{taxa}.
 }
 \description{
-Aplica \code{\link[=fit_zibbmr_taxon]{fit_zibbmr_taxon()}} a cada elemento de \code{taxa}, con la misma
-configuracion de covariables e iteraciones para todos.
+Applies \code{\link[=fit_zibbmr_taxon]{fit_zibbmr_taxon()}} to each element of \code{taxa}, with the same
+covariate and iteration configuration for all of them.
 }
 \seealso{
 \code{\link[=fit_zibbmr_taxon]{fit_zibbmr_taxon()}}

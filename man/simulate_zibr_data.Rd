@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibr.R
 \name{simulate_zibr_data}
 \alias{simulate_zibr_data}
-\title{Simular datos longitudinales para un modelo ZIBR}
+\title{Simulate longitudinal data for a ZIBR model}
 \usage{
 simulate_zibr_data(
   n_subjects,
@@ -19,45 +19,43 @@ simulate_zibr_data(
 )
 }
 \arguments{
-\item{n_subjects}{Numero de sujetos.}
+\item{n_subjects}{Number of subjects.}
 
-\item{n_time}{Numero de observaciones (tiempos) por sujeto.}
+\item{n_time}{Number of observations (time points) per subject.}
 
-\item{zi}{Logico. Si \code{TRUE} (por defecto), simula presencia/ausencia con un
-modelo logistico (\code{X}/\code{alpha}) antes de simular la magnitud beta.}
+\item{zi}{Logical. If \code{TRUE} (default), simulates presence/absence with a
+logistic model (\code{X}/\code{alpha}) before simulating the beta magnitude.}
 
-\item{X}{Matriz o data frame de covariables para la parte de inflacion de
-ceros. \code{NULL} si \code{zi = FALSE}.}
+\item{X}{Matrix or data frame of covariates for the zero-inflation part.
+\code{NULL} if \code{zi = FALSE}.}
 
-\item{Z}{Matriz o data frame de covariables para la parte beta.}
+\item{Z}{Matrix or data frame of covariates for the beta part.}
 
-\item{alpha}{Vector de coeficientes verdaderos de la parte logistica
-(intercepto + columnas de \code{X}). Requerido si \code{zi = TRUE}.}
+\item{alpha}{Vector of true coefficients of the logistic part (intercept +
+columns of \code{X}). Required if \code{zi = TRUE}.}
 
-\item{beta}{Vector de coeficientes verdaderos de la parte beta (intercepto
-\itemize{
-\item columnas de \code{Z}).
-}}
+\item{beta}{Vector of true coefficients of the beta part (intercept +
+columns of \code{Z}).}
 
-\item{sigma_alpha}{Desviacion estandar del intercepto aleatorio de la parte
-logistica. Requerido si \code{zi = TRUE}.}
+\item{sigma_alpha}{Standard deviation of the random intercept of the
+logistic part. Required if \code{zi = TRUE}.}
 
-\item{sigma_beta}{Desviacion estandar del intercepto aleatorio de la parte
-beta.}
+\item{sigma_beta}{Standard deviation of the random intercept of the beta
+part.}
 
-\item{phi}{Parametro de dispersion de la distribucion beta.}
+\item{phi}{Dispersion parameter of the beta distribution.}
 
-\item{seed}{Semilla aleatoria opcional.}
+\item{seed}{Optional random seed.}
 }
 \value{
-Un data frame con columnas \code{Subject}, \code{Time}, \code{Y} (la respuesta
-simulada) y las covariables de \code{X}/\code{Z} usadas.
+A data frame with columns \code{Subject}, \code{Time}, \code{Y} (the simulated
+response) and the \code{X}/\code{Z} covariates used.
 }
 \description{
-Genera un data frame de datos longitudinales compatibles con \code{\link[=fit_zibr]{fit_zibr()}}:
-una respuesta continua acotada en \verb{[0, 1]}, con inflacion de ceros
-opcional, efectos fijos y un intercepto (u otros coeficientes) aleatorios
-por sujeto con distribucion normal multivariada.
+Generates a data frame of longitudinal data compatible with \code{\link[=fit_zibr]{fit_zibr()}}:
+a continuous response bounded in \verb{[0, 1]}, with optional zero inflation,
+fixed effects and a per-subject random intercept (or other coefficients)
+with a multivariate normal distribution.
 }
 \examples{
 n_subjects <- 10

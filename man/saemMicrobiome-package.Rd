@@ -4,21 +4,21 @@
 \name{saemMicrobiome-package}
 \alias{saemMicrobiome}
 \alias{saemMicrobiome-package}
-\title{saemMicrobiome: modelos SAEM para microbioma longitudinal}
+\title{saemMicrobiome: SAEM models for longitudinal microbiome data}
 \description{
-Herramientas para ajustar, simular y comparar modelos mixtos con
-inflacion de ceros para datos longitudinales de microbioma:
+Tools to fit, simulate and compare zero-inflated mixed models for
+longitudinal microbiome data:
 }
 \details{
 \itemize{
-\item \strong{ZIBR} (zero-inflated beta regression), para proporciones o
-abundancias relativas: ver \code{\link[=fit_zibr]{fit_zibr()}}.
-\item \strong{ZIBBMR} (zero-inflated beta-binomial mixed regression), para
-conteos con profundidad de secuenciacion conocida: ver \code{\link[=fit_zibbmr]{fit_zibbmr()}}.
+\item \strong{ZIBR} (zero-inflated beta regression), for proportions or relative
+abundances: see \code{\link[=fit_zibr]{fit_zibr()}}.
+\item \strong{ZIBBMR} (zero-inflated beta-binomial mixed regression), for counts
+with known sequencing depth: see \code{\link[=fit_zibbmr]{fit_zibbmr()}}.
 }
 
-Ambos se estiman con el algoritmo Stochastic Approximation EM (SAEM),
-siguiendo la metodologia desarrollada por John Barrera.
+Both are estimated with the Stochastic Approximation EM (SAEM) algorithm,
+following the methodology developed by John Barrera.
 }
 \seealso{
 Useful links:
@@ -38,7 +38,7 @@ Authors:
 
 Other contributors:
 \itemize{
-  \item John Barrera (Autor original del metodo de estimacion SAEM para ZIBR y ZIBBMR) [contributor]
+  \item John Barrera (Original author of the SAEM estimation method for ZIBR and ZIBBMR) [contributor]
 }
 
 }

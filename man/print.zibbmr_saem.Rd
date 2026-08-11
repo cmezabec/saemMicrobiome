@@ -2,18 +2,18 @@
 % Please edit documentation in R/zibbmr.R
 \name{print.zibbmr_saem}
 \alias{print.zibbmr_saem}
-\title{Imprimir un ajuste ZIBBMR}
+\title{Print a ZIBBMR fit}
 \usage{
 \method{print}{zibbmr_saem}(x, ...)
 }
 \arguments{
-\item{x}{Un objeto \code{zibbmr_saem}, resultado de \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
+\item{x}{A \code{zibbmr_saem} object, the result of \code{\link[=fit_zibbmr]{fit_zibbmr()}}.}
 
-\item{...}{No usado, por compatibilidad con el generico \code{\link[=print]{print()}}.}
+\item{...}{Unused, for compatibility with the \code{\link[=print]{print()}} generic.}
 }
 \value{
-\code{x}, de forma invisible.
+\code{x}, invisibly.
 }
 \description{
-Imprimir un ajuste ZIBBMR
+Print a ZIBBMR fit
 }

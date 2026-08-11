@@ -1,15 +1,15 @@
-#' saemMicrobiome: modelos SAEM para microbioma longitudinal
+#' saemMicrobiome: SAEM models for longitudinal microbiome data
 #'
-#' Herramientas para ajustar, simular y comparar modelos mixtos con
-#' inflacion de ceros para datos longitudinales de microbioma:
+#' Tools to fit, simulate and compare zero-inflated mixed models for
+#' longitudinal microbiome data:
 #'
-#' - **ZIBR** (zero-inflated beta regression), para proporciones o
-#'   abundancias relativas: ver [fit_zibr()].
-#' - **ZIBBMR** (zero-inflated beta-binomial mixed regression), para
-#'   conteos con profundidad de secuenciacion conocida: ver [fit_zibbmr()].
+#' - **ZIBR** (zero-inflated beta regression), for proportions or relative
+#'   abundances: see [fit_zibr()].
+#' - **ZIBBMR** (zero-inflated beta-binomial mixed regression), for counts
+#'   with known sequencing depth: see [fit_zibbmr()].
 #'
-#' Ambos se estiman con el algoritmo Stochastic Approximation EM (SAEM),
-#' siguiendo la metodologia desarrollada por John Barrera.
+#' Both are estimated with the Stochastic Approximation EM (SAEM) algorithm,
+#' following the methodology developed by John Barrera.
 #'
 #' @keywords internal
 #' @importFrom stats rnorm runif rt dt plogis rbinom vcov

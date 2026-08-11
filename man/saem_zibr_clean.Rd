@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibr.R
 \name{saem_zibr_clean}
 \alias{saem_zibr_clean}
-\title{Alias historico de fit_zibr con la firma del codigo original de Barrera}
+\title{Historical alias of fit_zibr with the signature of Barrera's original code}
 \usage{
 saem_zibr_clean(
   Y,
@@ -22,22 +22,22 @@ saem_zibr_clean(
 )
 }
 \arguments{
-\item{Y, X, Z, index, zi, v0, a0, b0, seed, iter, ncad, a.fix, b.fix}{Ver los
-argumentos equivalentes de \code{\link[=fit_zibr]{fit_zibr()}}: \code{Y = y}, \code{index = id},
-\code{v0 = phi_start}, \code{a0 = alpha_start}, \code{b0 = beta_start}, \code{iter = n_iter},
-\code{ncad = n_chains}, \code{a.fix}/\code{b.fix} equivalen a \code{alpha_random}/
-\code{beta_random} (\code{a.fix == 0} marca las posiciones aleatorias).}
+\item{Y, X, Z, index, zi, v0, a0, b0, seed, iter, ncad, a.fix, b.fix}{See the equivalent
+arguments of \code{\link[=fit_zibr]{fit_zibr()}}: \code{Y = y}, \code{index = id}, \code{v0 = phi_start},
+\code{a0 = alpha_start}, \code{b0 = beta_start}, \code{iter = n_iter}, \code{ncad = n_chains};
+\code{a.fix}/\code{b.fix} correspond to \code{alpha_random}/\code{beta_random} (\code{a.fix == 0}
+marks the random positions).}
 
-\item{compute_fim}{Ver \code{\link[=fit_zibr]{fit_zibr()}}.}
+\item{compute_fim}{See \code{\link[=fit_zibr]{fit_zibr()}}.}
 }
 \value{
-Un objeto \code{zibr_saem}, igual que \code{\link[=fit_zibr]{fit_zibr()}}.
+A \code{zibr_saem} object, same as \code{\link[=fit_zibr]{fit_zibr()}}.
 }
 \description{
-Envoltorio de compatibilidad hacia atras que expone \code{\link[=fit_zibr]{fit_zibr()}} con los
-mismos nombres de argumento que el script original \code{saem_zibr()}
-(\code{jbarrera232/saem-zibr}). Se mantiene para no romper analisis existentes;
-el codigo nuevo deberia usar \code{\link[=fit_zibr]{fit_zibr()}} directamente.
+Backward-compatibility wrapper that exposes \code{\link[=fit_zibr]{fit_zibr()}} with the same
+argument names as the original \code{saem_zibr()} script
+(\code{jbarrera232/saem-zibr}). Kept so as not to break existing analyses; new
+code should use \code{\link[=fit_zibr]{fit_zibr()}} directly.
 }
 \seealso{
 \code{\link[=fit_zibr]{fit_zibr()}}

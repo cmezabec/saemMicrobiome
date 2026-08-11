@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibbmr.R
 \name{fit_zibbmr}
 \alias{fit_zibbmr}
-\title{Ajustar un modelo ZIBBMR (zero-inflated beta-binomial mixed regression) via SAEM}
+\title{Fit a ZIBBMR (zero-inflated beta-binomial mixed regression) model via SAEM}
 \usage{
 fit_zibbmr(
   y,
@@ -25,83 +25,80 @@ fit_zibbmr(
 )
 }
 \arguments{
-\item{y}{Vector de conteos (numero de lecturas del taxon), \verb{0 <= y <= S}.}
+\item{y}{Vector of counts (number of reads of the taxon), \verb{0 <= y <= S}.}
 
-\item{S}{Vector con el total de lecturas (profundidad de secuenciacion) de
-cada observacion, misma longitud que \code{y}.}
+\item{S}{Vector with the total reads (sequencing depth) of each observation,
+same length as \code{y}.}
 
-\item{id}{Vector (o factor) que identifica al sujeto de cada observacion.}
+\item{id}{Vector (or factor) identifying the subject of each observation.}
 
-\item{X}{Matriz o data frame de covariables para la parte de inflacion de
-ceros (parte logistica). \code{NULL} si \code{zi = FALSE}.}
+\item{X}{Matrix or data frame of covariates for the zero-inflation part
+(logistic part). \code{NULL} if \code{zi = FALSE}.}
 
-\item{Z}{Matriz o data frame de covariables para la parte beta-binomial
-(magnitud condicional). \code{NULL} equivale a solo intercepto.}
+\item{Z}{Matrix or data frame of covariates for the beta-binomial part
+(conditional magnitude). \code{NULL} is equivalent to intercept only.}
 
-\item{zi}{Logico. Si \code{TRUE} (por defecto) ajusta la parte de inflacion de
-ceros.}
+\item{zi}{Logical. If \code{TRUE} (default) fits the zero-inflation part.}
 
-\item{phi_start}{Valor inicial del parametro de dispersion \code{phi}.}
+\item{phi_start}{Starting value for the dispersion parameter \code{phi}.}
 
-\item{alpha_start}{Vector de valores iniciales para los coeficientes de la
-parte logistica. Requerido si \code{zi = TRUE}.}
+\item{alpha_start}{Vector of starting values for the coefficients of the
+logistic part. Required if \code{zi = TRUE}.}
 
-\item{beta_start}{Vector de valores iniciales para los coeficientes de la
-parte beta-binomial.}
+\item{beta_start}{Vector of starting values for the coefficients of the
+beta-binomial part.}
 
-\item{n_iter}{Numero de iteraciones del algoritmo SAEM.}
+\item{n_iter}{Number of iterations of the SAEM algorithm.}
 
-\item{n_chains}{Numero de cadenas MCMC paralelas usadas en el S-step.}
+\item{n_chains}{Number of parallel MCMC chains used in the S-step.}
 
-\item{seed}{Semilla aleatoria opcional.}
+\item{seed}{Optional random seed.}
 
-\item{alpha_random}{Vector logico que indica que coeficientes de la parte
-logistica son efectos aleatorios (por defecto, solo el intercepto).}
+\item{alpha_random}{Logical vector indicating which coefficients of the
+logistic part are random effects (by default, only the intercept).}
 
-\item{beta_random}{Vector logico que indica que coeficientes de la parte
-beta-binomial son efectos aleatorios (por defecto, solo el intercepto).}
+\item{beta_random}{Logical vector indicating which coefficients of the
+beta-binomial part are random effects (by default, only the intercept).}
 
-\item{n_is}{Numero de muestras de importance sampling para la
-log-verosimilitud marginal.}
+\item{n_is}{Number of importance-sampling draws for the marginal
+log-likelihood.}
 
-\item{compute_fim}{Logico. Si \code{TRUE}, calcula la matriz de informacion de
-Fisher estocastica (necesaria para \code{vcov()}/\code{se()}).}
+\item{compute_fim}{Logical. If \code{TRUE}, computes the stochastic Fisher
+information matrix (needed for \code{vcov()}/\code{se()}).}
 
-\item{cov_random}{Estructura de la matriz de covarianza de los efectos
-aleatorios. \code{"diag"} (por defecto) los trata como independientes entre la
-parte de inflacion de ceros y la parte beta-binomial: es la especificacion
-del articulo y la unica que las alternativas (\code{glmmTMB}, \code{gamlss}) tambien
-pueden ajustar. \code{"unstructured"} estima ademas la covarianza entre ambos.
+\item{cov_random}{Structure of the random-effect covariance matrix. \code{"diag"}
+(default) treats them as independent between the zero-inflation part and
+the beta-binomial part: it is the specification of the paper and the only
+one that the alternatives (\code{glmmTMB}, \code{gamlss}) can also fit.
+\code{"unstructured"} additionally estimates the covariance between the two.
 
-Conviene usar \code{"unstructured"} solo con bastante informacion: con pocos
-sujetos u observaciones por sujeto la matriz sin restricciones degenera
-(la correlacion se va a \eqn{\pm 1} y una de las varianzas colapsa). Como
-referencia, con 40 sujetos y 4 observaciones cada uno se ha observado
-\eqn{\hat\rho = -0.92} sobre datos generados con \eqn{\rho = 0}.
+\code{"unstructured"} should only be used with plenty of information: with few
+subjects or observations per subject the unrestricted matrix degenerates
+(the correlation goes to \eqn{\pm 1} and one of the variances collapses).
+As a reference, with 40 subjects and 4 observations each, an estimate of
+\eqn{\hat\rho = -0.92} has been observed on data generated with
+\eqn{\rho = 0}.
 
-Ojo: la matriz de informacion de Fisher esta derivada para el caso
-diagonal, asi que con \code{"unstructured"} los errores estandar son
-aproximados y no hay error estandar para la correlacion. Para contrastar
-\eqn{H_0:\rho=0} conviene usar el test de razon de verosimilitud sobre
-\code{logLik()} en vez de un test de Wald.}
+Note: the Fisher information matrix is derived for the diagonal case, so
+with \code{"unstructured"} the standard errors are approximate and there is no
+standard error for the correlation. To test \eqn{H_0:\rho=0} it is better
+to use the likelihood-ratio test on \code{logLik()} rather than a Wald test.}
 }
 \value{
-Un objeto de clase \code{zibbmr_saem} (y \code{SAEM_ZIBBMR_result} por
-compatibilidad), con los mismos elementos que \code{\link[=fit_zibr]{fit_zibr()}} (\code{mu}, \code{G},
-\code{phi}, \code{loglik}, \code{trace}, \code{fisher_stoch}, etc.). Tiene metodos
-\code{\link[=print]{print()}}, \code{\link[=plot]{plot()}}, \code{\link[stats:logLik]{stats::logLik()}}, \code{\link[stats:coef]{stats::coef()}},
-\code{\link[stats:vcov]{stats::vcov()}} y \code{\link[=se]{se()}}.
+An object of class \code{zibbmr_saem} (and \code{SAEM_ZIBBMR_result} for
+compatibility), with the same elements as \code{\link[=fit_zibr]{fit_zibr()}} (\code{mu}, \code{G}, \code{phi},
+\code{loglik}, \code{trace}, \code{fisher_stoch}, etc.). It has \code{\link[=print]{print()}}, \code{\link[=plot]{plot()}},
+\code{\link[stats:logLik]{stats::logLik()}}, \code{\link[stats:coef]{stats::coef()}}, \code{\link[stats:vcov]{stats::vcov()}} and \code{\link[=se]{se()}} methods.
 }
 \description{
-Estima por Stochastic Approximation EM (SAEM) un modelo mixto
-beta-binomial con inflacion de ceros para datos longitudinales de conteo
-con profundidad de secuenciacion conocida (\code{S}), siguiendo el metodo
-descrito en Barrera (ZIBBMR: "Stochastic EM Estimation and Inference in
-Zero-Inflated Beta-Binomial Mixed Models for Longitudinal Count Data"). Es
-el analogo de \code{\link[=fit_zibr]{fit_zibr()}} para conteos: en vez de modelar una proporcion
-observada directamente, modela el numero de lecturas \code{y} de un taxon sobre
-un total \code{S} (profundidad de secuenciacion de la muestra) con una
-verosimilitud beta-binomial.
+Estimates, by Stochastic Approximation EM (SAEM), a zero-inflated
+beta-binomial mixed model for longitudinal count data with known sequencing
+depth (\code{S}), following the method described in Barrera (ZIBBMR: "Stochastic
+EM Estimation and Inference in Zero-Inflated Beta-Binomial Mixed Models for
+Longitudinal Count Data"). It is the count analogue of \code{\link[=fit_zibr]{fit_zibr()}}: instead
+of modelling an observed proportion directly, it models the read count \code{y}
+of a taxon out of a total \code{S} (the sample's sequencing depth) with a
+beta-binomial likelihood.
 }
 \examples{
 \donttest{
@@ -126,5 +123,5 @@ print(fit)
 }
 \seealso{
 \code{\link[=fit_zibbmr_taxon]{fit_zibbmr_taxon()}}, \code{\link[=simulate_zibbmr_data]{simulate_zibbmr_data()}}, \code{\link[=lrt_zibbmr]{lrt_zibbmr()}},
-\code{\link[=fit_zibr]{fit_zibr()}} para la version en proporciones.
+\code{\link[=fit_zibr]{fit_zibr()}} for the proportion version.
 }

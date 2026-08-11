@@ -2,7 +2,7 @@
 % Please edit documentation in R/zibr.R
 \name{lrt_zibr_table}
 \alias{lrt_zibr_table}
-\title{Tabla de pruebas de razon de verosimilitudes para varios taxones ZIBR}
+\title{Table of likelihood-ratio tests for several ZIBR taxa}
 \usage{
 lrt_zibr_table(
   full_models,
@@ -13,25 +13,25 @@ lrt_zibr_table(
 )
 }
 \arguments{
-\item{full_models}{Lista de modelos completos (uno por taxon).}
+\item{full_models}{List of full models (one per taxon).}
 
-\item{reduced_models}{Lista de modelos reducidos (uno por taxon, mismo
-orden que \code{full_models}).}
+\item{reduced_models}{List of reduced models (one per taxon, same order as
+\code{full_models}).}
 
-\item{species}{Vector de nombres/etiquetas para cada taxon (por defecto,
+\item{species}{Vector of names/labels for each taxon (by default,
 \code{names(full_models)}).}
 
-\item{df}{Grados de libertad de la prueba, ver \code{\link[=lrt_zibr]{lrt_zibr()}}.}
+\item{df}{Degrees of freedom of the test, see \code{\link[=lrt_zibr]{lrt_zibr()}}.}
 
-\item{alpha}{Nivel de significancia usado para marcar \code{Detected}.}
+\item{alpha}{Significance level used to flag \code{Detected}.}
 }
 \value{
-Un data frame con una fila por taxon: \code{Species}, las columnas de
-\code{\link[=lrt_zibr]{lrt_zibr()}}, y \code{Detected} (logico, \code{p_value < alpha}).
+A data frame with one row per taxon: \code{Species}, the columns of
+\code{\link[=lrt_zibr]{lrt_zibr()}}, and \code{Detected} (logical, \code{p_value < alpha}).
 }
 \description{
-Aplica \code{\link[=lrt_zibr]{lrt_zibr()}} pareando cada elemento de \code{full_models} con el
-correspondiente en \code{reduced_models}, y arma una tabla con una fila por
+Applies \code{\link[=lrt_zibr]{lrt_zibr()}} pairing each element of \code{full_models} with the
+corresponding one in \code{reduced_models}, and builds a table with one row per
 taxon.
 }
 \seealso{

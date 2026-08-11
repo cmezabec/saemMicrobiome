@@ -2,19 +2,19 @@
 % Please edit documentation in R/zibr.R
 \name{coef.zibr_saem}
 \alias{coef.zibr_saem}
-\title{Coeficientes estimados de un ajuste ZIBR}
+\title{Estimated coefficients of a ZIBR fit}
 \usage{
 \method{coef}{zibr_saem}(object, ...)
 }
 \arguments{
-\item{object}{Un objeto \code{zibr_saem}, resultado de \code{\link[=fit_zibr]{fit_zibr()}}.}
+\item{object}{A \code{zibr_saem} object, the result of \code{\link[=fit_zibr]{fit_zibr()}}.}
 
-\item{...}{No usado, por compatibilidad con el generico \code{\link[stats:coef]{stats::coef()}}.}
+\item{...}{Unused, for compatibility with the \code{\link[stats:coef]{stats::coef()}} generic.}
 }
 \value{
-Vector numerico \code{mu} con los coeficientes de la parte logistica
-seguidos de los de la parte beta.
+Numeric vector \code{mu} with the coefficients of the logistic part
+followed by those of the beta part.
 }
 \description{
-Coeficientes estimados de un ajuste ZIBR
+Estimated coefficients of a ZIBR fit
 }

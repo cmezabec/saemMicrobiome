@@ -1,11 +1,11 @@
-test_that("simular_datos_microbioma devuelve conteos y proporciones consistentes", {
-  sim <- simular_datos_microbioma(n_ind = 6, n_time = 3, n_taxa = 4, N = 200, seed = 1)
+test_that("simulate_microbiome_data returns consistent counts and proportions", {
+  sim <- simulate_microbiome_data(n_ind = 6, n_time = 3, n_taxa = 4, N = 200, seed = 1)
 
-  expect_named(sim, c("conteo", "proporcion", "taxa"))
-  expect_equal(nrow(sim$conteo), 18)
+  expect_named(sim, c("count", "proportion", "taxa"))
+  expect_equal(nrow(sim$count), 18)
   expect_length(sim$taxa, 4)
-  expect_equal(unname(rowSums(sim$conteo[, sim$taxa])), rep(200, 18))
-  expect_equal(unname(rowSums(sim$proporcion[, sim$taxa])), rep(1, 18), tolerance = 1e-8)
+  expect_equal(unname(rowSums(sim$count[, sim$taxa])), rep(200, 18))
+  expect_equal(unname(rowSums(sim$proportion[, sim$taxa])), rep(1, 18), tolerance = 1e-8)
 })
 
 make_romero_fixture <- function() {
@@ -26,7 +26,7 @@ make_romero_fixture <- function() {
   list(SampleData = sample_data, OTU = otu)
 }
 
-test_that("prepare_romero_zibr filtra por proporcion de ceros y devuelve abundancias relativas", {
+test_that("prepare_romero_zibr filters by zero proportion and returns relative abundances", {
   romero <- make_romero_fixture()
   out <- prepare_romero_zibr(romero, taxa_out = integer(0), zero_range = c(0.1, 0.9))
 
@@ -36,7 +36,7 @@ test_that("prepare_romero_zibr filtra por proporcion de ceros y devuelve abundan
   expect_true(all(out$abundances[[1]] <= 1))
 })
 
-test_that("prepare_romero_zibbmr conserva los conteos crudos", {
+test_that("prepare_romero_zibbmr keeps the raw counts", {
   romero <- make_romero_fixture()
   out <- prepare_romero_zibbmr(romero, taxa_out = integer(0), zero_range = c(0.1, 0.9))
 
@@ -44,9 +44,9 @@ test_that("prepare_romero_zibbmr conserva los conteos crudos", {
   expect_equal(out$counts$T2, romero$OTU$T2)
 })
 
-test_that("prepare_romero_zibr exige SampleData y OTU", {
+test_that("prepare_romero_zibr requires SampleData and OTU", {
   expect_error(
     prepare_romero_zibr(list(SampleData = data.frame())),
-    "SampleData y OTU"
+    "SampleData and OTU"
   )
 })

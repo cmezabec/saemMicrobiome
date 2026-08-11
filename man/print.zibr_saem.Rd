@@ -2,18 +2,18 @@
 % Please edit documentation in R/zibr.R
 \name{print.zibr_saem}
 \alias{print.zibr_saem}
-\title{Imprimir un ajuste ZIBR}
+\title{Print a ZIBR fit}
 \usage{
 \method{print}{zibr_saem}(x, ...)
 }
 \arguments{
-\item{x}{Un objeto \code{zibr_saem}, resultado de \code{\link[=fit_zibr]{fit_zibr()}}.}
+\item{x}{A \code{zibr_saem} object, the result of \code{\link[=fit_zibr]{fit_zibr()}}.}
 
-\item{...}{No usado, por compatibilidad con el generico \code{\link[=print]{print()}}.}
+\item{...}{Unused, for compatibility with the \code{\link[=print]{print()}} generic.}
 }
 \value{
-\code{x}, de forma invisible.
+\code{x}, invisibly.
 }
 \description{
-Imprimir un ajuste ZIBR
+Print a ZIBR fit
 }
