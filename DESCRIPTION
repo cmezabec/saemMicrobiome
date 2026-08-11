@@ -1,0 +1,31 @@
+Package: saemMicrobiome
+Title: Modelos SAEM para datos longitudinales de microbioma
+Version: 0.0.1
+Authors@R: c(
+    person("Gabriela", "Gutierrez", email = "gabriella.gutierrez.bernal@gmail.com", role = c("aut", "cre")),
+    person("John", "Barrera", role = "ctb", comment = "Autor original del metodo de estimacion SAEM para ZIBR y ZIBBMR"))
+Description: Implementacion de modelos ZIBR y ZIBBMR para datos longitudinales de microbioma, incluyendo una funcion madre para seleccionar el tipo de modelo. El algoritmo de estimacion SAEM fue desarrollado originalmente por John Barrera.
+License: GPL (>= 3)
+Encoding: UTF-8
+URL: https://github.com/gabrielagutierrezbernal/saemMicrobiome
+BugReports: https://github.com/gabrielagutierrezbernal/saemMicrobiome/issues
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 8.0.0
+Imports:
+    MASS,
+    stats,
+    graphics,
+    grDevices,
+    numDeriv,
+    Rcpp
+LinkingTo:
+    Rcpp
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    NBZIMM
+Remotes:
+    nyiuab/NBZIMM
+Config/testthat/edition: 3
+VignetteBuilder: knitr
