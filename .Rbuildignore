@@ -2,3 +2,5 @@
 ^\.Rproj\.user$
 ^.*\.Rproj$
 ^LICENSE\.md$
+^CITATION\.cff$
+^\.zenodo\.json$

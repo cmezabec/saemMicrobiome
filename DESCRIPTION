@@ -2,15 +2,21 @@ Package: saemMicrobiome
 Title: SAEM Models for Longitudinal Microbiome Data
 Version: 0.0.1
 Authors@R: c(
-    person("Gabriela", "Gutierrez", email = "gabriella.gutierrez.bernal@gmail.com", role = c("aut", "cre")),
-    person("John", "Barrera", role = "ctb", comment = "Original author of the SAEM estimation method for ZIBR and ZIBBMR"))
+    person("Gabriela", "Gutierrez Bernal", email = "gabriella.gutierrez.bernal@gmail.com",
+           role = "aut",
+           comment = "Design and implementation of the R package"),
+    person("John", "Barrera", role = "aut",
+           comment = "Original author of the SAEM estimation method for ZIBR and ZIBBMR"),
+    person("Cristian", "Meza", email = "cristian.meza@uv.cl",
+           role = c("aut", "cre", "ths"),
+           comment = c(ORCID = "0000-0001-6332-6137")))
 Description: Implementation of ZIBR and ZIBBMR models for longitudinal
     microbiome data, including a mother function to select the model type.
     The SAEM estimation algorithm was originally developed by John Barrera.
 License: GPL (>= 3)
 Encoding: UTF-8
-URL: https://github.com/gabrielagutierrezbernal/saemMicrobiome
-BugReports: https://github.com/gabrielagutierrezbernal/saemMicrobiome/issues
+URL: https://github.com/cmezabec/saemMicrobiome
+BugReports: https://github.com/cmezabec/saemMicrobiome/issues
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 8.0.0
 Imports:

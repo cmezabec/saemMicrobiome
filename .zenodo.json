@@ -1,0 +1,28 @@
+{
+  "title": "saemMicrobiome: SAEM Models for Longitudinal Microbiome Data",
+  "description": "Implementation of zero-inflated beta regression (ZIBR) and zero-inflated beta-binomial mixed regression (ZIBBMR) models for longitudinal microbiome data, estimated with the SAEM (Stochastic Approximation EM) algorithm. R package with C++ (Rcpp) components.",
+  "upload_type": "software",
+  "license": "GPL-3.0-or-later",
+  "access_right": "open",
+  "creators": [
+    {
+      "name": "Gutierrez Bernal, Gabriela"
+    },
+    {
+      "name": "Barrera, John"
+    },
+    {
+      "name": "Meza, Cristian",
+      "orcid": "0000-0001-6332-6137",
+      "affiliation": "Instituto de Ingenieria Matematica (INGEMAT) - CIMFAV, Universidad de Valparaiso"
+    }
+  ],
+  "keywords": [
+    "microbiome",
+    "longitudinal data",
+    "mixed-effects models",
+    "SAEM algorithm",
+    "zero-inflated models",
+    "R package"
+  ]
+}
