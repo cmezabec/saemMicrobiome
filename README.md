@@ -22,7 +22,7 @@ use in longitudinal microbiome analysis.
 
 ```r
 # install.packages("remotes")
-remotes::install_github("gabrielagutierrezbernal/saemMicrobiome")
+remotes::install_github("cmezabec/saemMicrobiome")
 ```
 
 ## Example: ZIBR (proportions)
