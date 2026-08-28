@@ -20,6 +20,11 @@ test_that("fit_zibbmr reproduces a known result for a fixed seed", {
   # noise of the algorithm, so the results are statistically equivalent; this
   # test pins exact values and is only reliable on the reference platform (the
   # development machine).
+  # Reference values regenerated after the zero-inflated likelihood fix: the
+  # Beta-Binomial mass at zero now enters P(Y = 0), so the fitted values change.
+  # They are closer to the truth used to simulate the data, c(-0.3, 0.5, 0.2,
+  # -0.4) and phi = 15: the error in the zero-inflation intercept drops from
+  # 0.134 to 0.008, and that of the two abundance coefficients roughly halves.
   skip_on_ci()
   n_subjects <- 40
   n_time <- 4
@@ -51,10 +56,10 @@ test_that("fit_zibbmr reproduces a known result for a fixed seed", {
   # of 7e-2. The published results are not materially affected.
   expect_equal(
     fit$mu,
-    c(-0.1660967, 0.4001918, 0.1179033, -0.3392167),
+    c(-0.3080790, 0.5913856, 0.1534860, -0.3692267),
     tolerance = 1e-5
   )
-  expect_equal(fit$phi, 14.74063, tolerance = 1e-4)
+  expect_equal(fit$phi, 15.41598, tolerance = 1e-4)
   expect_equal(fit$loglik, -616.1987, tolerance = 1e-2)
 })
 

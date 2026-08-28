@@ -11,28 +11,28 @@
 test_that(".saem_diag_inverse inverts the full matrix, not just the diagonal", {
   G <- matrix(c(0.49, 0.21, 0.21, 0.25), 2, 2)
 
-  expect_equal(.saem_diag_inverse(G), solve(G))
+  expect_equal(saemMicrobiome:::.saem_diag_inverse(G), solve(G))
   # The previous version returned this, which is NOT the inverse of G:
-  expect_false(isTRUE(all.equal(.saem_diag_inverse(G), diag(1 / diag(G)))))
+  expect_false(isTRUE(all.equal(saemMicrobiome:::.saem_diag_inverse(G), diag(1 / diag(G)))))
   # G %*% G^{-1} must give the identity.
-  expect_equal(G %*% .saem_diag_inverse(G), diag(2), ignore_attr = TRUE)
+  expect_equal(G %*% saemMicrobiome:::.saem_diag_inverse(G), diag(2), ignore_attr = TRUE)
 })
 
 test_that(".saem_diag_inverse is still correct with diagonal G", {
   # Backward compatibility: all published results use diagonal G, and there the
   # two versions agree exactly.
   G <- diag(c(0.49, 0.25))
-  expect_equal(.saem_diag_inverse(G), diag(1 / diag(G)))
+  expect_equal(saemMicrobiome:::.saem_diag_inverse(G), diag(1 / diag(G)))
 
   # 1x1 case (models without a zero-inflation part).
-  expect_equal(.saem_diag_inverse(matrix(0.4, 1, 1)), matrix(2.5, 1, 1))
+  expect_equal(saemMicrobiome:::.saem_diag_inverse(matrix(0.4, 1, 1)), matrix(2.5, 1, 1))
 })
 
 test_that(".saem_diag_inverse does not fail with a singular G", {
   # This can happen in early SAEM iterations, before the variance components
   # stabilize: it must fall back to the pseudo-inverse.
   G <- matrix(c(1, 1, 1, 1), 2, 2)
-  expect_no_error(inv <- .saem_diag_inverse(G))
+  expect_no_error(inv <- saemMicrobiome:::.saem_diag_inverse(G))
   expect_true(all(is.finite(inv)))
 })
 

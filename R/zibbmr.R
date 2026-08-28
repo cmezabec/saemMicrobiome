@@ -12,7 +12,7 @@
 
 .zibbmr_neg_loglik_beta_binomial <- function(par, psi_chain, beta_random,
                                              z_design_chain, id_chain,
-                                             is_positive_chain, y_chain, s_chain,
+                                             z_chain, y_chain, s_chain,
                                              n_alpha, n_beta, n_beta_random) {
   phi <- par[length(par)]
   n_rows <- nrow(psi_chain)
@@ -36,13 +36,13 @@
   )
 
   loglik <- sum(
-    lgamma(y_chain[is_positive_chain] + phi * u[is_positive_chain]) +
-      lgamma(s_chain[is_positive_chain] - y_chain[is_positive_chain] +
-               phi * (1 - u[is_positive_chain])) -
-      lgamma(s_chain[is_positive_chain] + phi) +
+    lgamma(y_chain[z_chain] + phi * u[z_chain]) +
+      lgamma(s_chain[z_chain] - y_chain[z_chain] +
+               phi * (1 - u[z_chain])) -
+      lgamma(s_chain[z_chain] + phi) +
       lgamma(phi) -
-      lgamma(phi * u[is_positive_chain]) -
-      lgamma(phi * (1 - u[is_positive_chain]))
+      lgamma(phi * u[z_chain]) -
+      lgamma(phi * (1 - u[z_chain]))
   )
 
   -loglik
@@ -58,6 +58,13 @@
                                       n_random, n_samples = 500, seed = NULL) {
   if (!is.null(seed)) {
     set.seed(seed)
+  }
+
+  # Without zero inflation there is no structural component: every observation,
+  # including the null ones, enters through the Beta-Binomial.
+  if (!zi) {
+    is_positive <- rep(TRUE, length(y))
+    is_zero <- rep(FALSE, length(y))
   }
 
   G_inv <- .saem_diag_inverse(G)
@@ -96,8 +103,15 @@
 
   log_y_given_psi <- matrix(0, nrow = length(id), ncol = n_samples)
 
-  if (zi) {
-    log_y_given_psi[is_zero, ] <- log(1 - p_draws[is_zero, ])
+  if (zi && any(is_zero)) {
+    # P(Y = 0) = (1 - p) + p f_BB(0). The Beta-Binomial is discrete and also
+    # produces zeros, so its mass at zero cannot be omitted: doing so leaves the
+    # density summing to 1 - p f_BB(0) < 1.
+    log_f0 <- lbeta(phi * u_draws[is_zero, ],
+                    s[is_zero] + phi * (1 - u_draws[is_zero, ])) -
+      lbeta(phi * u_draws[is_zero, ],
+            phi * (1 - u_draws[is_zero, ]))
+    log_y_given_psi[is_zero, ] <- log1p(p_draws[is_zero, ] * expm1(log_f0))
   }
 
   log_y_given_psi[is_positive, ] <-
@@ -148,7 +162,7 @@
 .zibbmr_complete_grad <- function(mu, G, phi, zi, psi_chain,
                                   random_index, alpha_random, beta_random,
                                   n_random, x_design_chain = NULL, id_chain,
-                                  is_positive_chain, is_zero_chain,
+                                  z_chain, z_zero_chain,
                                   n_alpha, n_beta, z_design_chain,
                                   y_chain, s_chain,
                                   n_alpha_random, n_beta_random) {
@@ -182,8 +196,8 @@
       alpha_random = alpha_random,
       x_design_chain = x_design_chain,
       id_chain = id_chain,
-      is_positive_chain = is_positive_chain,
-      is_zero_chain = is_zero_chain,
+      is_positive_chain = z_chain,
+      is_zero_chain = z_zero_chain,
       n_alpha = n_alpha
     )
   }
@@ -201,7 +215,7 @@
     beta_random = beta_random,
     z_design_chain = z_design_chain,
     id_chain = id_chain,
-    is_positive_chain = is_positive_chain,
+    z_chain = z_chain,
     y_chain = y_chain,
     s_chain = s_chain,
     n_alpha = n_alpha,
@@ -227,7 +241,7 @@
 .zibbmr_complete_hess <- function(mu, G, phi, zi, psi_chain,
                                   random_index, alpha_random, beta_random,
                                   n_random, x_design_chain = NULL, id_chain,
-                                  is_positive_chain, is_zero_chain,
+                                  z_chain, z_zero_chain,
                                   n_alpha, n_beta, z_design_chain,
                                   y_chain, s_chain,
                                   n_alpha_random, n_beta_random) {
@@ -269,8 +283,8 @@
       alpha_random = alpha_random,
       x_design_chain = x_design_chain,
       id_chain = id_chain,
-      is_positive_chain = is_positive_chain,
-      is_zero_chain = is_zero_chain,
+      is_positive_chain = z_chain,
+      is_zero_chain = z_zero_chain,
       n_alpha = n_alpha
     )
 
@@ -291,7 +305,7 @@
     beta_random = beta_random,
     z_design_chain = z_design_chain,
     id_chain = id_chain,
-    is_positive_chain = is_positive_chain,
+    z_chain = z_chain,
     y_chain = y_chain,
     s_chain = s_chain,
     n_alpha = n_alpha,
@@ -482,8 +496,16 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
   # rebuilding the factor at each iteration).
   subject_group_chain <- rep(seq_len(n_subjects), n_chains)
 
-  is_positive_chain <- rep(is_positive, n_chains)
-  is_zero_chain <- rep(is_zero, n_chains)
+  # z_chain marks the observations belonging to the Beta-Binomial component.
+  # Without zero inflation that is all of them. With zero inflation it is the
+  # positive ones with certainty, and the null ones according to the Gibbs draw
+  # performed at each iteration (see below): an observed zero may come from the
+  # structural component or from the Beta-Binomial, which assigns it positive
+  # probability. z_obs_zero is constant and only records which observations are
+  # zero.
+  z_obs_zero <- rep(is_zero, n_chains)
+  z_chain <- if (zi) rep(is_positive, n_chains) else rep(TRUE, n_chains * n_total)
+  z_zero_chain <- !z_chain
   y_chain <- rep(y, n_chains)
   S_chain <- rep(S, n_chains)
 
@@ -558,8 +580,8 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
           id_chain,
           x_design_chain
         )
-        log_ratio_data[is_zero_chain] <-
-          log(1 - p_chain[is_zero_chain]) - log(1 - p_candidate[is_zero_chain])
+        log_ratio_data[z_zero_chain] <-
+          log(1 - p_chain[z_zero_chain]) - log(1 - p_candidate[z_zero_chain])
       } else {
         p_candidate <- p_chain
       }
@@ -571,18 +593,18 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
         z_design_chain
       )
 
-      log_ratio_data[is_positive_chain] <-
-        log(p_chain[is_positive_chain]) - log(p_candidate[is_positive_chain]) +
-        lgamma(y_chain[is_positive_chain] + phi * u_chain[is_positive_chain]) +
-        lgamma(S_chain[is_positive_chain] - y_chain[is_positive_chain] +
-                 phi * (1 - u_chain[is_positive_chain])) -
-        lgamma(y_chain[is_positive_chain] + phi * u_candidate[is_positive_chain]) -
-        lgamma(S_chain[is_positive_chain] - y_chain[is_positive_chain] +
-                 phi * (1 - u_candidate[is_positive_chain])) +
-        lgamma(phi * u_candidate[is_positive_chain]) +
-        lgamma(phi * (1 - u_candidate[is_positive_chain])) -
-        lgamma(phi * u_chain[is_positive_chain]) -
-        lgamma(phi * (1 - u_chain[is_positive_chain]))
+      log_ratio_data[z_chain] <-
+        log(p_chain[z_chain]) - log(p_candidate[z_chain]) +
+        lgamma(y_chain[z_chain] + phi * u_chain[z_chain]) +
+        lgamma(S_chain[z_chain] - y_chain[z_chain] +
+                 phi * (1 - u_chain[z_chain])) -
+        lgamma(y_chain[z_chain] + phi * u_candidate[z_chain]) -
+        lgamma(S_chain[z_chain] - y_chain[z_chain] +
+                 phi * (1 - u_candidate[z_chain])) +
+        lgamma(phi * u_candidate[z_chain]) +
+        lgamma(phi * (1 - u_candidate[z_chain])) -
+        lgamma(phi * u_chain[z_chain]) -
+        lgamma(phi * (1 - u_chain[z_chain]))
 
       subject_log_ratio <- as.vector(rowsum(log_ratio_data, id_chain))
       accept <- subject_log_ratio < -log(runif(n_subjects * n_chains))
@@ -619,8 +641,8 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
           id_chain,
           x_design_chain
         )
-        log_ratio_data[is_zero_chain] <-
-          log(1 - p_chain[is_zero_chain]) - log(1 - p_candidate[is_zero_chain])
+        log_ratio_data[z_zero_chain] <-
+          log(1 - p_chain[z_zero_chain]) - log(1 - p_candidate[z_zero_chain])
       } else {
         p_candidate <- p_chain
       }
@@ -632,18 +654,18 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
         z_design_chain
       )
 
-      log_ratio_data[is_positive_chain] <-
-        log(p_chain[is_positive_chain]) - log(p_candidate[is_positive_chain]) +
-        lgamma(y_chain[is_positive_chain] + phi * u_chain[is_positive_chain]) +
-        lgamma(S_chain[is_positive_chain] - y_chain[is_positive_chain] +
-                 phi * (1 - u_chain[is_positive_chain])) -
-        lgamma(y_chain[is_positive_chain] + phi * u_candidate[is_positive_chain]) -
-        lgamma(S_chain[is_positive_chain] - y_chain[is_positive_chain] +
-                 phi * (1 - u_candidate[is_positive_chain])) +
-        lgamma(phi * u_candidate[is_positive_chain]) +
-        lgamma(phi * (1 - u_candidate[is_positive_chain])) -
-        lgamma(phi * u_chain[is_positive_chain]) -
-        lgamma(phi * (1 - u_chain[is_positive_chain]))
+      log_ratio_data[z_chain] <-
+        log(p_chain[z_chain]) - log(p_candidate[z_chain]) +
+        lgamma(y_chain[z_chain] + phi * u_chain[z_chain]) +
+        lgamma(S_chain[z_chain] - y_chain[z_chain] +
+                 phi * (1 - u_chain[z_chain])) -
+        lgamma(y_chain[z_chain] + phi * u_candidate[z_chain]) -
+        lgamma(S_chain[z_chain] - y_chain[z_chain] +
+                 phi * (1 - u_candidate[z_chain])) +
+        lgamma(phi * u_candidate[z_chain]) +
+        lgamma(phi * (1 - u_candidate[z_chain])) -
+        lgamma(phi * u_chain[z_chain]) -
+        lgamma(phi * (1 - u_chain[z_chain]))
 
       d_candidate <- psi_candidate[, random_index, drop = FALSE] - mu_chain[, random_index, drop = FALSE]
       d_current <- psi_chain[, random_index, drop = FALSE] - mu_chain[, random_index, drop = FALSE]
@@ -686,8 +708,8 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
           id_chain,
           x_design_chain
         )
-        log_ratio_data[is_zero_chain] <-
-          log(1 - p_chain[is_zero_chain]) - log(1 - p_candidate[is_zero_chain])
+        log_ratio_data[z_zero_chain] <-
+          log(1 - p_chain[z_zero_chain]) - log(1 - p_candidate[z_zero_chain])
       } else {
         p_candidate <- p_chain
       }
@@ -699,18 +721,18 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
         z_design_chain
       )
 
-      log_ratio_data[is_positive_chain] <-
-        log(p_chain[is_positive_chain]) - log(p_candidate[is_positive_chain]) +
-        lgamma(y_chain[is_positive_chain] + phi * u_chain[is_positive_chain]) +
-        lgamma(S_chain[is_positive_chain] - y_chain[is_positive_chain] +
-                 phi * (1 - u_chain[is_positive_chain])) -
-        lgamma(y_chain[is_positive_chain] + phi * u_candidate[is_positive_chain]) -
-        lgamma(S_chain[is_positive_chain] - y_chain[is_positive_chain] +
-                 phi * (1 - u_candidate[is_positive_chain])) +
-        lgamma(phi * u_candidate[is_positive_chain]) +
-        lgamma(phi * (1 - u_candidate[is_positive_chain])) -
-        lgamma(phi * u_chain[is_positive_chain]) -
-        lgamma(phi * (1 - u_chain[is_positive_chain]))
+      log_ratio_data[z_chain] <-
+        log(p_chain[z_chain]) - log(p_candidate[z_chain]) +
+        lgamma(y_chain[z_chain] + phi * u_chain[z_chain]) +
+        lgamma(S_chain[z_chain] - y_chain[z_chain] +
+                 phi * (1 - u_chain[z_chain])) -
+        lgamma(y_chain[z_chain] + phi * u_candidate[z_chain]) -
+        lgamma(S_chain[z_chain] - y_chain[z_chain] +
+                 phi * (1 - u_candidate[z_chain])) +
+        lgamma(phi * u_candidate[z_chain]) +
+        lgamma(phi * (1 - u_candidate[z_chain])) -
+        lgamma(phi * u_chain[z_chain]) -
+        lgamma(phi * (1 - u_chain[z_chain]))
 
       d_candidate <- psi_candidate[, random_index, drop = FALSE] - mu_chain[, random_index, drop = FALSE]
       d_current <- psi_chain[, random_index, drop = FALSE] - mu_chain[, random_index, drop = FALSE]
@@ -735,6 +757,24 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
     proposal_sd_multi <-
       (1 + 0.5 * (accepted_multi / (4 * n_chains * n_subjects) - 0.4)) *
       proposal_sd_multi
+
+    # Gibbs step for the latent indicator Z. Its conditional is exact,
+    #   P(Z = 1 | y = 0, psi) = p f_BB(0) / [(1 - p) + p f_BB(0)],
+    # a Bernoulli with a closed-form probability, so it needs no
+    # Metropolis-Hastings step. With Z drawn, both M-steps keep exactly the form
+    # they had: only the index set they sum over changes.
+    if (zi && any(z_obs_zero)) {
+      log_f0 <- lbeta(phi * u_chain[z_obs_zero],
+                      S_chain[z_obs_zero] + phi * (1 - u_chain[z_obs_zero])) -
+        lbeta(phi * u_chain[z_obs_zero],
+              phi * (1 - u_chain[z_obs_zero]))
+      # (1 - p) + p f0 = 1 - p (1 - f0). Written as log1p(p * expm1(log f0)) it
+      # loses no precision either for f0 ~ 0 or for f0 ~ 1.
+      log_den <- log1p(p_chain[z_obs_zero] * expm1(log_f0))
+      prob_bb <- exp(log(p_chain[z_obs_zero]) + log_f0 - log_den)
+      z_chain[z_obs_zero] <- runif(sum(z_obs_zero)) < prob_bb
+      z_zero_chain <- !z_chain
+    }
 
     psi_subject_mean <- psi_subject_mean +
       gamma * (
@@ -772,8 +812,8 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
             alpha_random = alpha_random,
             x_design_chain = x_design_chain,
             id_chain = id_chain,
-            is_positive_chain = is_positive_chain,
-            is_zero_chain = is_zero_chain,
+            is_positive_chain = z_chain,
+            is_zero_chain = z_zero_chain,
             n_alpha = n_alpha
           )$par
 
@@ -797,7 +837,7 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
         beta_random = beta_random,
         z_design_chain = z_design_chain,
         id_chain = id_chain,
-        is_positive_chain = is_positive_chain,
+        z_chain = z_chain,
         y_chain = y_chain,
         s_chain = S_chain,
         n_alpha = n_alpha,
@@ -828,14 +868,14 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
         grad_current <- .zibbmr_complete_grad(
           mu, G, phi, zi, psi_chain, random_index, alpha_random,
           beta_random, n_random, x_design_chain, id_chain,
-          is_positive_chain, is_zero_chain, n_alpha, n_beta,
+          z_chain, z_zero_chain, n_alpha, n_beta,
           z_design_chain, y_chain, S_chain, n_alpha_random, n_beta_random
         )
 
         hess_current <- .zibbmr_complete_hess(
           mu, G, phi, zi, psi_chain, random_index, alpha_random,
           beta_random, n_random, x_design_chain, id_chain,
-          is_positive_chain, is_zero_chain, n_alpha, n_beta,
+          z_chain, z_zero_chain, n_alpha, n_beta,
           z_design_chain, y_chain, S_chain, n_alpha_random, n_beta_random
         )
 
@@ -843,11 +883,18 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
 
         for (chain in seq_len(n_chains)) {
           row_index <- n_subjects * (chain - 1) + seq_len(n_subjects)
+          # Latent indicators of THIS chain. These used to be is_positive and
+          # is_zero, the OBSERVED indicators: correct while the model assigned
+          # every zero to the structural component, but no longer, because Z now
+          # decides. Without this the score^2 term of Louis's identity uses a
+          # different indicator from the rest of the FIM, and the standard errors
+          # come out wrong wherever f_BB(0) is not negligible.
+          obs_index <- n_total * (chain - 1) + seq_len(n_total)
 
           grad_chain <- .zibbmr_complete_grad(
             mu, G, phi, zi, psi_chain[row_index, , drop = FALSE],
             random_index, alpha_random, beta_random, n_random,
-            x_design, subject_id, is_positive, is_zero,
+            x_design, subject_id, z_chain[obs_index], z_zero_chain[obs_index],
             n_alpha, n_beta, z_design, y, S,
             n_alpha_random, n_beta_random
           )
