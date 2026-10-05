@@ -320,6 +320,61 @@
 }
 
 
+#### Stochastic-approximation step on the score (mstep = "score") ####
+
+# The coefficients without a random effect (the slopes of both parts) and phi
+# have no sufficient statistics, so the M-step cannot be written as a
+# stochastic approximation of them. The default ("argmax") maximizes the
+# complete log-likelihood of the CURRENT simulated sample and then averages the
+# PARAMETER, theta <- theta + gamma (theta_opt - theta). That is the scheme
+# saemix uses for parameters without variability, and it is accurate when each
+# iteration's sample is informative; but the average of the per-iteration
+# maximizers is not the maximizer of the averaged complete log-likelihood, and
+# when the simulated random effects are noisy (few observations per subject,
+# few chains) the difference is a bias that does not shrink with more
+# iterations.
+#
+# The alternative ("score") is the stochastic approximation of Gu and Kong
+# (1998, PNAS 95:7270): a Newton step on the gradient of the current sample's
+# complete log-likelihood, preconditioned by a stochastic-approximation average
+# of its Hessian,
+#   H_bar <- H_bar + gamma (H_k - H_bar),   theta <- theta - gamma H_bar^{-1} g_k.
+# Because H_bar is averaged rather than taken from each sample, the mean step
+# vanishes exactly where the mean score vanishes, which by Fisher's identity is
+# the maximum of the observed likelihood. The preconditioner only affects the
+# speed, not the limit.
+
+# Beta-Binomial part with phi on the log scale, so that a Newton step cannot
+# make phi negative.
+.zibbmr_neg_loglik_bb_logphi <- function(par, ...) {
+  par[length(par)] <- exp(par[length(par)])
+  .zibbmr_neg_loglik_beta_binomial(par, ...)
+}
+
+# One preconditioned Robbins-Monro step. grad and hess are the gradient and
+# Hessian of the NEGATIVE complete log-likelihood at theta on the current
+# sample; hess_bar is the running average (NULL before the first step). The
+# averaged Hessian is made positive definite through its eigenvalues, and the
+# step is capped at max_step in each coordinate so that a single noisy sample
+# cannot throw the parameters far away early in the averaging phase.
+.saem_score_step <- function(theta, grad, hess, hess_bar, gamma, max_step = 1) {
+  hess <- (hess + t(hess)) / 2
+  hess_bar <- if (is.null(hess_bar)) hess else hess_bar + gamma * (hess - hess_bar)
+  e <- eigen(hess_bar, symmetric = TRUE)
+  vals <- abs(e$values)
+  vals <- pmax(vals, 1e-8 * max(vals, 1e-12))
+  step <- -gamma * as.vector(e$vectors %*% (crossprod(e$vectors, grad) / vals))
+  big <- max(abs(step))
+  if (is.finite(big) && big > max_step) {
+    step <- step * max_step / big
+  }
+  if (!all(is.finite(step))) {
+    step <- rep(0, length(theta))
+  }
+  list(theta = theta + step, hess_bar = hess_bar)
+}
+
+
 #### Main SAEM-ZIBBMR fit ####
 
 #' Fit a ZIBBMR (zero-inflated beta-binomial mixed regression) model via SAEM
@@ -375,6 +430,20 @@
 #'   with `"unstructured"` the standard errors are approximate and there is no
 #'   standard error for the correlation. To test \eqn{H_0:\rho=0} it is better
 #'   to use the likelihood-ratio test on `logLik()` rather than a Wald test.
+#' @param mstep How the coefficients without a random effect (the covariate
+#'   effects of both parts) and `phi` are updated once the averaging phase
+#'   starts (after the first 75% of the iterations). `"argmax"` (default, the
+#'   original algorithm and the scheme of saemix for parameters without
+#'   variability) maximizes the complete log-likelihood of the current
+#'   simulated sample and averages the resulting parameter. `"score"` takes
+#'   instead a Newton step on the gradient of the current sample, with a
+#'   stochastic-approximation average of the Hessian as preconditioner (Gu and
+#'   Kong, 1998). The two coincide when each iteration's sample is
+#'   informative; when it is not (few observations per subject, few chains),
+#'   `"argmax"` converges to a point that is not the maximum likelihood
+#'   estimate and more iterations do not correct it, whereas `"score"` does
+#'   converge to it. During the burn-in both use `"argmax"`, which is more
+#'   robust far from the optimum.
 #'
 #' @return An object of class `zibbmr_saem` (and `SAEM_ZIBBMR_result` for
 #'   compatibility), with the same elements as [fit_zibr()] (`mu`, `G`, `phi`,
@@ -410,9 +479,15 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
                        n_iter = 1000, n_chains = 5, seed = NULL,
                        alpha_random = NULL, beta_random = NULL,
                        n_is = 500, compute_fim = TRUE,
-                       cov_random = c("diag", "unstructured")) {
+                       cov_random = c("diag", "unstructured"),
+                       mstep = c("argmax", "score")) {
   .saem_check_packages(inference = compute_fim)
   cov_random <- .saem_validate_structure(cov_random)
+  mstep <- match.arg(mstep)
+  # numDeriv is needed for the score step even without the information matrix.
+  if (mstep == "score" && !requireNamespace("numDeriv", quietly = TRUE)) {
+    stop("mstep = \"score\" requires the numDeriv package.", call. = FALSE)
+  }
 
   if (!is.null(seed)) {
     set.seed(seed)
@@ -556,8 +631,13 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
   trace <- NULL
   burn_in <- floor(0.75 * n_iter)
 
+  # Running averages of the Hessians for mstep = "score" (see .saem_score_step).
+  hess_bar_alpha <- NULL
+  hess_bar_beta_phi <- NULL
+
   for (iter in seq_len(n_iter)) {
     gamma <- if (iter <= burn_in) 1 else 1 / (iter - burn_in)
+    use_score <- mstep == "score" && iter > burn_in
 
     mu_chain <- matrix(
       rep(mu, n_chains * n_subjects),
@@ -804,7 +884,25 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
       if (zi) {
         alpha <- mu[seq_len(n_alpha)]
 
-        if (n_alpha_random != n_alpha) {
+        if (n_alpha_random != n_alpha && use_score) {
+          args_zero <- list(
+            psi_chain = psi_chain,
+            alpha_random = alpha_random,
+            x_design_chain = x_design_chain,
+            id_chain = id_chain,
+            is_positive_chain = z_chain,
+            is_zero_chain = z_zero_chain,
+            n_alpha = n_alpha
+          )
+          g_alpha <- do.call(numDeriv::grad, c(list(func = .saem_neg_loglik_zero,
+                                                     x = alpha[!alpha_random]), args_zero))
+          h_alpha <- do.call(numDeriv::hessian, c(list(func = .saem_neg_loglik_zero,
+                                                        x = alpha[!alpha_random]), args_zero))
+          step <- .saem_score_step(alpha[!alpha_random], g_alpha, h_alpha,
+                                   hess_bar_alpha, gamma)
+          alpha[!alpha_random] <- step$theta
+          hess_bar_alpha <- step$hess_bar
+        } else if (n_alpha_random != n_alpha) {
           alpha_opt <- stats::nlminb(
             start = alpha[!alpha_random],
             objective = .saem_neg_loglik_zero,
@@ -830,23 +928,49 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
         beta_phi_par <- phi
       }
 
-      beta_phi_opt <- stats::nlminb(
-        start = beta_phi_par,
-        objective = .zibbmr_neg_loglik_beta_binomial,
-        psi_chain = psi_chain,
-        beta_random = beta_random,
-        z_design_chain = z_design_chain,
-        id_chain = id_chain,
-        z_chain = z_chain,
-        y_chain = y_chain,
-        s_chain = S_chain,
-        n_alpha = n_alpha,
-        n_beta = n_beta,
-        n_beta_random = n_beta_random,
-        lower = c(rep(-Inf, length(beta_phi_par) - 1), 0.0001)
-      )$par
+      if (use_score) {
+        # Same step on (beta fixed, log phi).
+        args_bb <- list(
+          psi_chain = psi_chain,
+          beta_random = beta_random,
+          z_design_chain = z_design_chain,
+          id_chain = id_chain,
+          z_chain = z_chain,
+          y_chain = y_chain,
+          s_chain = S_chain,
+          n_alpha = n_alpha,
+          n_beta = n_beta,
+          n_beta_random = n_beta_random
+        )
+        par_log <- beta_phi_par
+        par_log[length(par_log)] <- log(par_log[length(par_log)])
+        g_bb <- do.call(numDeriv::grad, c(list(func = .zibbmr_neg_loglik_bb_logphi,
+                                                x = par_log), args_bb))
+        h_bb <- do.call(numDeriv::hessian, c(list(func = .zibbmr_neg_loglik_bb_logphi,
+                                                   x = par_log), args_bb))
+        step <- .saem_score_step(par_log, g_bb, h_bb, hess_bar_beta_phi, gamma)
+        hess_bar_beta_phi <- step$hess_bar
+        beta_phi_par <- step$theta
+        beta_phi_par[length(beta_phi_par)] <- exp(beta_phi_par[length(beta_phi_par)])
+      } else {
+        beta_phi_opt <- stats::nlminb(
+          start = beta_phi_par,
+          objective = .zibbmr_neg_loglik_beta_binomial,
+          psi_chain = psi_chain,
+          beta_random = beta_random,
+          z_design_chain = z_design_chain,
+          id_chain = id_chain,
+          z_chain = z_chain,
+          y_chain = y_chain,
+          s_chain = S_chain,
+          n_alpha = n_alpha,
+          n_beta = n_beta,
+          n_beta_random = n_beta_random,
+          lower = c(rep(-Inf, length(beta_phi_par) - 1), 0.0001)
+        )$par
 
-      beta_phi_par <- beta_phi_par + gamma * (beta_phi_opt - beta_phi_par)
+        beta_phi_par <- beta_phi_par + gamma * (beta_phi_opt - beta_phi_par)
+      }
 
       phi <- beta_phi_par[length(beta_phi_par)]
 
@@ -974,6 +1098,7 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
     beta_random = beta_random,
     random_index = random_index,
     fisher_stoch = fisher_stoch,
+    mstep = mstep,
     nobs = n_total,
     # Original data, to be able to compute predictions and residuals in plot().
     # They do not affect estimation; they are only stored for the plots. Includes

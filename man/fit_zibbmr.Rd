@@ -21,7 +21,8 @@ fit_zibbmr(
   beta_random = NULL,
   n_is = 500,
   compute_fim = TRUE,
-  cov_random = c("diag", "unstructured")
+  cov_random = c("diag", "unstructured"),
+  mstep = c("argmax", "score")
 )
 }
 \arguments{
@@ -83,6 +84,21 @@ Note: the Fisher information matrix is derived for the diagonal case, so
 with \code{"unstructured"} the standard errors are approximate and there is no
 standard error for the correlation. To test \eqn{H_0:\rho=0} it is better
 to use the likelihood-ratio test on \code{logLik()} rather than a Wald test.}
+
+\item{mstep}{How the coefficients without a random effect (the covariate
+effects of both parts) and \code{phi} are updated once the averaging phase
+starts (after the first 75\% of the iterations). \code{"argmax"} (default, the
+original algorithm and the scheme of saemix for parameters without
+variability) maximizes the complete log-likelihood of the current
+simulated sample and averages the resulting parameter. \code{"score"} takes
+instead a Newton step on the gradient of the current sample, with a
+stochastic-approximation average of the Hessian as preconditioner (Gu and
+Kong, 1998). The two coincide when each iteration's sample is
+informative; when it is not (few observations per subject, few chains),
+\code{"argmax"} converges to a point that is not the maximum likelihood
+estimate and more iterations do not correct it, whereas \code{"score"} does
+converge to it. During the burn-in both use \code{"argmax"}, which is more
+robust far from the optimum.}
 }
 \value{
 An object of class \code{zibbmr_saem} (and \code{SAEM_ZIBBMR_result} for
