@@ -22,7 +22,10 @@ fit_zibbmr(
   n_is = 500,
   compute_fim = TRUE,
   cov_random = c("diag", "unstructured"),
-  mstep = c("argmax", "score")
+  mstep = c("argmax", "score"),
+  annealing = FALSE,
+  annealing_tau = 0.97,
+  annealing_iter = NULL
 )
 }
 \arguments{
@@ -99,6 +102,24 @@ informative; when it is not (few observations per subject, few chains),
 estimate and more iterations do not correct it, whereas \code{"score"} does
 converge to it. During the burn-in both use \code{"argmax"}, which is more
 robust far from the optimum.}
+
+\item{annealing}{Logical. If \code{TRUE}, applies simulated annealing to the
+random-effect variances during the first \code{annealing_iter} iterations: each
+variance may not decrease by more than a factor \code{annealing_tau} per
+iteration, and the random effects start with variance at least 1. This is
+the device saemix and Monolix use to keep a variance from collapsing to zero
+early in the algorithm, which otherwise happens when each subject carries
+little information about its random effect (for instance three observations
+per subject, most of them zero, for the zero-inflation intercept): once the
+variance is small the simulated random effects barely move and the
+algorithm stays at a variance near zero that is not the maximum likelihood
+estimate. Default \code{FALSE} (the original algorithm).}
+
+\item{annealing_tau}{Factor in (0, 1) bounding the decrease of each variance
+per iteration during the annealing phase (saemix uses 0.97).}
+
+\item{annealing_iter}{Length of the annealing phase. \code{NULL} (default) uses
+half of the burn-in, as saemix does.}
 }
 \value{
 An object of class \code{zibbmr_saem} (and \code{SAEM_ZIBBMR_result} for
