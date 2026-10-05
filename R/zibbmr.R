@@ -375,6 +375,29 @@
 }
 
 
+#### Simulated annealing of the random-effect variances (annealing = TRUE) ####
+
+# With little information per subject (few observations, mostly zeros) the
+# variance of a random intercept can collapse: once it is small, the simulated
+# random effects barely move, their empirical variance is smaller still, and the
+# algorithm settles at a variance near zero that is not the maximum of the
+# likelihood. saemix and Monolix prevent this in the first iterations by not
+# letting each variance decrease faster than a fixed factor per iteration
+# (Lavielle's simulated annealing; saemix's alpha.sa = 0.97). The floor is
+# released afterwards, so a variance that is genuinely small is still reached.
+# Correlations are kept: only the scale of each random effect is floored.
+.saem_anneal_variances <- function(G, G_prev, tau) {
+  G <- as.matrix(G)
+  v_new <- diag(G)
+  v <- pmax(v_new, tau * diag(as.matrix(G_prev)))
+  if (any(v_new <= 0)) {
+    return(.saem_diag(v))
+  }
+  scale <- sqrt(v / v_new)
+  G * outer(scale, scale)
+}
+
+
 #### Main SAEM-ZIBBMR fit ####
 
 #' Fit a ZIBBMR (zero-inflated beta-binomial mixed regression) model via SAEM
@@ -444,6 +467,21 @@
 #'   estimate and more iterations do not correct it, whereas `"score"` does
 #'   converge to it. During the burn-in both use `"argmax"`, which is more
 #'   robust far from the optimum.
+#' @param annealing Logical. If `TRUE`, applies simulated annealing to the
+#'   random-effect variances during the first `annealing_iter` iterations: each
+#'   variance may not decrease by more than a factor `annealing_tau` per
+#'   iteration, and the random effects start with variance at least 1. This is
+#'   the device saemix and Monolix use to keep a variance from collapsing to zero
+#'   early in the algorithm, which otherwise happens when each subject carries
+#'   little information about its random effect (for instance three observations
+#'   per subject, most of them zero, for the zero-inflation intercept): once the
+#'   variance is small the simulated random effects barely move and the
+#'   algorithm stays at a variance near zero that is not the maximum likelihood
+#'   estimate. Default `FALSE` (the original algorithm).
+#' @param annealing_tau Factor in (0, 1) bounding the decrease of each variance
+#'   per iteration during the annealing phase (saemix uses 0.97).
+#' @param annealing_iter Length of the annealing phase. `NULL` (default) uses
+#'   half of the burn-in, as saemix does.
 #'
 #' @return An object of class `zibbmr_saem` (and `SAEM_ZIBBMR_result` for
 #'   compatibility), with the same elements as [fit_zibr()] (`mu`, `G`, `phi`,
@@ -480,7 +518,9 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
                        alpha_random = NULL, beta_random = NULL,
                        n_is = 500, compute_fim = TRUE,
                        cov_random = c("diag", "unstructured"),
-                       mstep = c("argmax", "score")) {
+                       mstep = c("argmax", "score"),
+                       annealing = FALSE, annealing_tau = 0.97,
+                       annealing_iter = NULL) {
   .saem_check_packages(inference = compute_fim)
   cov_random <- .saem_validate_structure(cov_random)
   mstep <- match.arg(mstep)
@@ -586,6 +626,12 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
 
   mu <- c(alpha_start, beta_start)
   G_full <- 0.5 * .saem_diag(abs(mu))
+  if (annealing) {
+    # Start the random effects with variance at least 1, as saemix does
+    # (omega.init = identity): annealing only slows the decrease, so starting
+    # from 0.5 * |start|, which is tiny for starting values near 0, would defeat it.
+    diag(G_full)[random_index] <- pmax(diag(G_full)[random_index], 1)
+  }
   G <- .saem_impose_structure(G_full[random_index, random_index, drop = FALSE], cov_random)
   phi <- phi_start
 
@@ -630,6 +676,7 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
 
   trace <- NULL
   burn_in <- floor(0.75 * n_iter)
+  n_anneal <- if (is.null(annealing_iter)) floor(burn_in / 2) else annealing_iter
 
   # Running averages of the Hessians for mstep = "score" (see .saem_score_step).
   hess_bar_alpha <- NULL
@@ -874,7 +921,11 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
     if (iter > 10) {
       mu <- stat1 / n_subjects
       G_full <- stat2 / n_subjects - (stat1 %*% t(stat1)) / n_subjects^2
+      G_prev <- G
       G <- .saem_impose_structure(G_full[random_index, random_index, drop = FALSE], cov_random)
+      if (annealing && iter <= n_anneal) {
+        G <- .saem_anneal_variances(G, G_prev, annealing_tau)
+      }
       # The proposal kernel uses G_full, so it must respect the same
       # restriction; otherwise it proposes in directions the model does not allow.
       G_full[random_index, random_index] <- G
@@ -1099,6 +1150,7 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
     random_index = random_index,
     fisher_stoch = fisher_stoch,
     mstep = mstep,
+    annealing = if (annealing) c(tau = annealing_tau, iter = n_anneal) else NULL,
     nobs = n_total,
     # Original data, to be able to compute predictions and residuals in plot().
     # They do not affect estimation; they are only stored for the plots. Includes
