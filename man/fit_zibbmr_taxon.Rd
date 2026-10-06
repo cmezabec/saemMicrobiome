@@ -17,7 +17,7 @@ fit_zibbmr_taxon(
   alpha_start = NULL,
   beta_start = NULL,
   seed = 232,
-  n_iter = 1000,
+  n_iter = 2000,
   n_chains = 5,
   compute_fim = FALSE,
   ...

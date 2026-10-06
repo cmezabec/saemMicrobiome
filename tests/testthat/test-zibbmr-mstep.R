@@ -83,6 +83,7 @@ test_that("annealing keeps each variance from falling faster than tau", {
   ratio <- v[12:n_anneal, , drop = FALSE] / v[11:(n_anneal - 1), , drop = FALSE]
   expect_true(all(ratio >= 0.9 - 1e-12))
   expect_equal(unname(fit$annealing), c(0.9, n_anneal))
-  # The default is the original algorithm, without annealing.
-  expect_null(do.call(fit_zibbmr, args)$annealing)
+  # Annealing is the default since 0.0.2; annealing = FALSE turns it off.
+  expect_false(is.null(do.call(fit_zibbmr, args)$annealing))
+  expect_null(do.call(fit_zibbmr, c(args, annealing = FALSE))$annealing)
 })

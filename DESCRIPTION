@@ -1,6 +1,6 @@
 Package: saemMicrobiome
 Title: SAEM Models for Longitudinal Microbiome Data
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: c(
     person("Gabriela", "Gutierrez Bernal", email = "gabriella.gutierrez.bernal@gmail.com",
            role = "aut",

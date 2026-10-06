@@ -425,7 +425,11 @@
 #'   logistic part. Required if `zi = TRUE`.
 #' @param beta_start Vector of starting values for the coefficients of the
 #'   beta-binomial part.
-#' @param n_iter Number of iterations of the SAEM algorithm.
+#' @param n_iter Number of iterations of the SAEM algorithm. The first 75% are
+#'   the burn-in and the last 25% the averaging phase. The default, 2000, was
+#'   raised from 1000 in version 0.0.2: with a covariate that is constant
+#'   within subject and a large random-effect variance, the parameters were
+#'   still drifting at the end of a 750-iteration burn-in.
 #' @param n_chains Number of parallel MCMC chains used in the S-step.
 #' @param seed Optional random seed.
 #' @param alpha_random Logical vector indicating which coefficients of the
@@ -477,7 +481,8 @@
 #'   per subject, most of them zero, for the zero-inflation intercept): once the
 #'   variance is small the simulated random effects barely move and the
 #'   algorithm stays at a variance near zero that is not the maximum likelihood
-#'   estimate. Default `FALSE` (the original algorithm).
+#'   estimate. Default `TRUE` since version 0.0.2; `FALSE` reproduces the
+#'   original algorithm.
 #' @param annealing_tau Factor in (0, 1) bounding the decrease of each variance
 #'   per iteration during the annealing phase (saemix uses 0.97).
 #' @param annealing_iter Length of the annealing phase. `NULL` (default) uses
@@ -514,12 +519,12 @@
 #' @export
 fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
                        phi_start, alpha_start = NULL, beta_start,
-                       n_iter = 1000, n_chains = 5, seed = NULL,
+                       n_iter = 2000, n_chains = 5, seed = NULL,
                        alpha_random = NULL, beta_random = NULL,
                        n_is = 500, compute_fim = TRUE,
                        cov_random = c("diag", "unstructured"),
                        mstep = c("argmax", "score"),
-                       annealing = FALSE, annealing_tau = 0.97,
+                       annealing = TRUE, annealing_tau = 0.97,
                        annealing_iter = NULL) {
   .saem_check_packages(inference = compute_fim)
   cov_random <- .saem_validate_structure(cov_random)
@@ -1446,7 +1451,7 @@ fit_zibbmr_taxon <- function(data, taxon, covariates = NULL,
                              total, id,
                              zi = TRUE, phi_start = NULL,
                              alpha_start = NULL, beta_start = NULL,
-                             seed = 232, n_iter = 1000, n_chains = 5,
+                             seed = 232, n_iter = 2000, n_chains = 5,
                              compute_fim = FALSE, ...) {
   if (!taxon %in% names(data)) {
     stop("The specified taxon does not exist in data.", call. = FALSE)
@@ -1533,7 +1538,7 @@ fit_zibbmr_taxa <- function(data, taxa, covariates = NULL,
                             x_covariates = covariates,
                             z_covariates = covariates,
                             total, id,
-                            zi = TRUE, seed = 232, n_iter = 1000,
+                            zi = TRUE, seed = 232, n_iter = 2000,
                             n_chains = 5, compute_fim = FALSE, ...) {
   fits <- lapply(taxa, function(taxon) {
     fit_zibbmr_taxon(

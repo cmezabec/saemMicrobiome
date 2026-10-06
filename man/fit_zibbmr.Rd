@@ -14,7 +14,7 @@ fit_zibbmr(
   phi_start,
   alpha_start = NULL,
   beta_start,
-  n_iter = 1000,
+  n_iter = 2000,
   n_chains = 5,
   seed = NULL,
   alpha_random = NULL,
@@ -23,7 +23,7 @@ fit_zibbmr(
   compute_fim = TRUE,
   cov_random = c("diag", "unstructured"),
   mstep = c("argmax", "score"),
-  annealing = FALSE,
+  annealing = TRUE,
   annealing_tau = 0.97,
   annealing_iter = NULL
 )
@@ -52,7 +52,11 @@ logistic part. Required if \code{zi = TRUE}.}
 \item{beta_start}{Vector of starting values for the coefficients of the
 beta-binomial part.}
 
-\item{n_iter}{Number of iterations of the SAEM algorithm.}
+\item{n_iter}{Number of iterations of the SAEM algorithm. The first 75\% are
+the burn-in and the last 25\% the averaging phase. The default, 2000, was
+raised from 1000 in version 0.0.2: with a covariate that is constant
+within subject and a large random-effect variance, the parameters were
+still drifting at the end of a 750-iteration burn-in.}
 
 \item{n_chains}{Number of parallel MCMC chains used in the S-step.}
 
@@ -113,7 +117,8 @@ little information about its random effect (for instance three observations
 per subject, most of them zero, for the zero-inflation intercept): once the
 variance is small the simulated random effects barely move and the
 algorithm stays at a variance near zero that is not the maximum likelihood
-estimate. Default \code{FALSE} (the original algorithm).}
+estimate. Default \code{TRUE} since version 0.0.2; \code{FALSE} reproduces the
+original algorithm.}
 
 \item{annealing_tau}{Factor in (0, 1) bounding the decrease of each variance
 per iteration during the annealing phase (saemix uses 0.97).}
