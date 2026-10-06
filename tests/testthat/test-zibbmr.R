@@ -43,7 +43,8 @@ test_that("fit_zibbmr reproduces a known result for a fixed seed", {
     y = dat$Y, S = dat$TotalCounts, id = dat$Subject,
     X = matrix(X, ncol = 1), Z = matrix(X, ncol = 1),
     phi_start = 10, alpha_start = c(-0.2, 0.1), beta_start = c(0.1, 0.1),
-    n_iter = 300, n_chains = 5, seed = 321, compute_fim = FALSE
+    n_iter = 300, n_chains = 5, seed = 321, compute_fim = FALSE,
+    annealing = FALSE   # 0.0.2: these are the values of the original algorithm
   )
 
   expect_s3_class(fit, "zibbmr_saem")
@@ -61,6 +62,32 @@ test_that("fit_zibbmr reproduces a known result for a fixed seed", {
   )
   expect_equal(fit$phi, 15.41598, tolerance = 1e-4)
   expect_equal(fit$loglik, -616.1987, tolerance = 1e-2)
+})
+
+test_that("fit_zibbmr with the 0.0.2 defaults (annealing) reproduces a known result", {
+  # Same data, starting values and seed as the previous test, with the default
+  # annealing of the random-effect variances. Platform caveat as above.
+  skip_on_ci()
+  n_subjects <- 40
+  n_time <- 4
+  n_total <- n_subjects * n_time
+  X <- rep(c(0, 1), each = n_time, length.out = n_total)
+  dat <- simulate_zibbmr_data(
+    n_subjects = n_subjects, n_time = n_time, S = rep(1000, n_total),
+    X = matrix(X, ncol = 1), Z = matrix(X, ncol = 1),
+    alpha = c(-0.3, 0.5), beta = c(0.2, -0.4),
+    sigma_alpha = 0.4, sigma_beta = 0.3, phi = 15, seed = 7
+  )
+  fit <- fit_zibbmr(
+    y = dat$Y, S = dat$TotalCounts, id = dat$Subject,
+    X = matrix(X, ncol = 1), Z = matrix(X, ncol = 1),
+    phi_start = 10, alpha_start = c(-0.2, 0.1), beta_start = c(0.1, 0.1),
+    n_iter = 300, n_chains = 5, seed = 321, compute_fim = FALSE
+  )
+  expect_false(is.null(fit$annealing))
+  expect_equal(fit$mu, c(-0.3222102, 0.6203784, 0.1600844, -0.3770731), tolerance = 1e-5)
+  expect_equal(fit$phi, 15.69766, tolerance = 1e-4)
+  expect_equal(fit$loglik, -616.3552, tolerance = 1e-2)
 })
 
 test_that("saem_zibbmr_clean (historical alias) gives the same result as fit_zibbmr", {
