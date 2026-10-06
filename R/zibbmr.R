@@ -1044,7 +1044,11 @@ fit_zibbmr <- function(y, S, id, X = NULL, Z = NULL, zi = TRUE,
         nrow = n_chains * n_subjects
       )
 
-      if (compute_fim) {
+      # During the burn-in gamma = 1, so the averages below are overwritten at
+      # every iteration and only those of the averaging phase reach the result:
+      # computing them earlier gives exactly the same estimate at four times
+      # the cost (with the default burn-in of 75%).
+      if (compute_fim && iter > burn_in) {
         grad_current <- .zibbmr_complete_grad(
           mu, G, phi, zi, psi_chain, random_index, alpha_random,
           beta_random, n_random, x_design_chain, id_chain,

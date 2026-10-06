@@ -29,6 +29,11 @@
   of averaging the per-iteration maximizers. It gives the same results as the
   default (`"argmax"`) in every case examined so far and is kept as an option.
 
+* The stochastic Fisher information is now accumulated only during the
+  averaging phase. During the burn-in its running averages were overwritten at
+  every iteration, so the result is identical; with the default burn-in the
+  fit is about 40% faster when `compute_fim = TRUE`.
+
 * `fit_zibr()` is unchanged.
 
 # saemMicrobiome 0.0.1
