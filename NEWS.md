@@ -1,3 +1,15 @@
+# saemMicrobiome 0.0.3
+
+* The logistic probabilities of both model parts are kept strictly inside
+  (0, 1). With very few positive counts (for instance a single positive count
+  in a data set), the M-step on one simulated sample can be separated during
+  the burn-in and a fixed effect can diverge; `plogis()` then returned exactly
+  0 or 1, `lgamma()` returned `Inf`, and the fit stopped with an error. Only
+  those two values are moved to the nearest representable probability, so fits
+  in which no linear predictor goes beyond about +-37 are unchanged. Such data
+  sets carry no information on the abundance part: the fit now ends at the
+  boundary (very large `phi` or slopes) instead of failing, as glmmTMB does.
+
 # saemMicrobiome 0.0.2
 
 ## Changes to the ZIBBMR estimator (`fit_zibbmr()`)
