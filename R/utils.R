@@ -124,7 +124,18 @@
   # and the rowSums); plogis() is applied in R (vectorized) so the result is
   # byte-identical to the pure-R version.
   eta <- saem_linear_eta_cpp(psi, as.integer(cols), as.integer(id), design)
-  plogis(eta)
+  # plogis() returns exactly 0 or 1 once |eta| exceeds about 745 or 37, which
+  # happens when a fixed effect is pushed far out during the burn-in (with few
+  # positive counts the M-step on a single simulated sample can be separated).
+  # A probability of exactly 0 or 1 makes lgamma(phi * u) or
+  # lgamma(phi * (1 - u)) infinite, and Inf - Inf = NaN then reaches the
+  # Metropolis-Hastings ratio, the chains and the sufficient statistics. Only
+  # those two values are moved to the nearest representable probability;
+  # everything strictly inside (0, 1) is left untouched.
+  p <- plogis(eta)
+  p[p == 0] <- .Machine$double.xmin
+  p[p == 1] <- 1 - .Machine$double.neg.eps
+  p
 }
 
 
