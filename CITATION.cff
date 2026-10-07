@@ -6,7 +6,7 @@ abstract: >-
   beta-binomial mixed regression (ZIBBMR) models for longitudinal microbiome
   data, estimated with the SAEM (Stochastic Approximation EM) algorithm.
 type: software
-version: 0.0.1
+version: 0.0.3
 date-released: "2026-08-24"
 license: GPL-3.0-or-later
 repository-code: "https://github.com/cmezabec/saemMicrobiome"
