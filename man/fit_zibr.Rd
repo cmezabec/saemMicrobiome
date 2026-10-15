@@ -21,7 +21,10 @@ fit_zibr(
   n_is = 500,
   compute_fim = TRUE,
   eps = 1e-06,
-  cov_random = c("diag", "unstructured")
+  cov_random = c("diag", "unstructured"),
+  annealing = TRUE,
+  annealing_tau = 0.97,
+  annealing_iter = NULL
 )
 }
 \arguments{
@@ -74,6 +77,21 @@ exactly equal to 0 (with \code{zi = FALSE}) or exactly equal to 1.}
 (default, independent between the two model parts) or \code{"unstructured"}
 (also estimates the covariance). See \code{\link[=fit_zibbmr]{fit_zibbmr()}} for the caveats about
 \code{"unstructured"}.}
+
+\item{annealing}{Logical. If \code{TRUE}, applies simulated annealing to the
+random-effect variances during the first \code{annealing_iter} iterations, as
+in \code{\link[=fit_zibbmr]{fit_zibbmr()}}: each variance may not decrease by more than a factor
+\code{annealing_tau} per iteration, and the random effects start with variance
+at least 1. Without it, with few observations per subject (for instance
+three visits) the variances can collapse to zero early in the algorithm,
+and the resulting log-likelihood, and hence the LRT, depends on the seed.
+\code{FALSE} reproduces the original algorithm.}
+
+\item{annealing_tau}{Factor in (0, 1) bounding the decrease of each variance
+per iteration during the annealing phase (saemix uses 0.97).}
+
+\item{annealing_iter}{Length of the annealing phase. \code{NULL} (default) uses
+half of the burn-in, as saemix does.}
 }
 \value{
 An object of class \code{zibr_saem} (and \code{SAEM_ZIBR_result} for

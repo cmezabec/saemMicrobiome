@@ -361,6 +361,18 @@
 #'   information matrix (needed for `vcov()`/`se()`).
 #' @param eps Small value used to avoid `log(0)` when `y` contains values
 #'   exactly equal to 0 (with `zi = FALSE`) or exactly equal to 1.
+#' @param annealing Logical. If `TRUE`, applies simulated annealing to the
+#'   random-effect variances during the first `annealing_iter` iterations, as
+#'   in [fit_zibbmr()]: each variance may not decrease by more than a factor
+#'   `annealing_tau` per iteration, and the random effects start with variance
+#'   at least 1. Without it, with few observations per subject (for instance
+#'   three visits) the variances can collapse to zero early in the algorithm,
+#'   and the resulting log-likelihood, and hence the LRT, depends on the seed.
+#'   `FALSE` reproduces the original algorithm.
+#' @param annealing_tau Factor in (0, 1) bounding the decrease of each variance
+#'   per iteration during the annealing phase (saemix uses 0.97).
+#' @param annealing_iter Length of the annealing phase. `NULL` (default) uses
+#'   half of the burn-in, as saemix does.
 #'
 #' @return An object of class `zibr_saem` (and `SAEM_ZIBR_result` for
 #'   compatibility), a list containing, among others, the elements `mu` (alpha
@@ -396,7 +408,9 @@ fit_zibr <- function(y, id, X = NULL, Z = NULL, zi = TRUE,
                      n_iter = 500, n_chains = 5, seed = NULL,
                      alpha_random = NULL, beta_random = NULL,
                      n_is = 500, compute_fim = TRUE, eps = 1e-6,
-                     cov_random = c("diag", "unstructured")) {
+                     cov_random = c("diag", "unstructured"),
+                     annealing = TRUE, annealing_tau = 0.97,
+                     annealing_iter = NULL) {
   .saem_check_packages(inference = compute_fim)
   cov_random <- .saem_validate_structure(cov_random)
 
@@ -482,6 +496,11 @@ fit_zibr <- function(y, id, X = NULL, Z = NULL, zi = TRUE,
 
   mu <- c(alpha_start, beta_start)
   G_full <- 0.5 * .saem_diag(abs(mu))
+  if (annealing) {
+    # Start the random effects with variance at least 1, as saemix does
+    # (omega.init = identity): see the same block in fit_zibbmr().
+    diag(G_full)[random_index] <- pmax(diag(G_full)[random_index], 1)
+  }
   G <- .saem_impose_structure(G_full[random_index, random_index, drop = FALSE], cov_random)
   phi <- phi_start
 
@@ -525,6 +544,7 @@ fit_zibr <- function(y, id, X = NULL, Z = NULL, zi = TRUE,
   stat2 <- G_full
   trace <- NULL
   burn_in <- floor(0.75 * n_iter)
+  n_anneal <- if (is.null(annealing_iter)) floor(burn_in / 2) else annealing_iter
 
   for (iter in seq_len(n_iter)) {
     gamma <- if (iter <= burn_in) 1 else 1 / (iter - burn_in)
@@ -737,7 +757,11 @@ fit_zibr <- function(y, id, X = NULL, Z = NULL, zi = TRUE,
     if (iter > 10) {
       mu <- stat1 / n_subjects
       G_full <- stat2 / n_subjects - (stat1 %*% t(stat1)) / n_subjects^2
+      G_prev <- G
       G <- .saem_impose_structure(G_full[random_index, random_index, drop = FALSE], cov_random)
+      if (annealing && iter <= n_anneal) {
+        G <- .saem_anneal_variances(G, G_prev, annealing_tau)
+      }
       # The proposal kernel uses G_full: it must respect the same restriction,
       # otherwise it proposes in directions the model does not allow.
       G_full[random_index, random_index] <- G
@@ -907,6 +931,7 @@ fit_zibr <- function(y, id, X = NULL, Z = NULL, zi = TRUE,
     beta_random = beta_random,
     random_index = random_index,
     fisher_stoch = fisher_stoch,
+    annealing = if (annealing) c(tau = annealing_tau, iter = n_anneal) else NULL,
     nobs = n_total,
     # Original data, to be able to compute predictions and residuals in plot().
     # They do not affect estimation; they are only stored for the plots.

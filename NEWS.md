@@ -1,3 +1,19 @@
+# saemMicrobiome 0.0.4
+
+* **`fit_zibr()` now has the simulated annealing of the random-effect variances
+  that `fit_zibbmr()` has had since 0.0.2, and it is on by default**
+  (`annealing = TRUE`, with the same `annealing_tau` and `annealing_iter`
+  arguments). With three observations per subject the variances of both random
+  intercepts collapsed to about 0, and more iterations made it worse. The
+  log-likelihood then depended on the seed: on one data set (48 subjects x 3
+  visits, a taxon with no effect) five seeds gave log-likelihoods from -16 to
+  58 and LRT statistics from -22 to 69. With annealing the log-likelihood is
+  61.2-62.1 for all five seeds, the LRT is -0.6 to 1.9, and the variances are
+  close to the truth. Over 30 null data sets the LRT rejected at the 5% level
+  in 73% of them without annealing and in 7% with it. The comparison with the
+  ZIBR package of Chen and Li still passes. Use `annealing = FALSE` to
+  reproduce the original algorithm.
+
 # saemMicrobiome 0.0.3
 
 * The logistic probabilities of both model parts are kept strictly inside

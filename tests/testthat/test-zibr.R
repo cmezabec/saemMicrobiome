@@ -44,7 +44,8 @@ test_that("fit_zibr reproduces a known result for a fixed seed", {
   fit <- fit_zibr(
     y = dat$Y, id = dat$Subject, X = matrix(X, ncol = 1), Z = matrix(X, ncol = 1),
     phi_start = 10, alpha_start = c(-0.2, 0.1), beta_start = c(0.1, 0.1),
-    n_iter = 300, n_chains = 5, seed = 123, compute_fim = FALSE
+    n_iter = 300, n_chains = 5, seed = 123, compute_fim = FALSE,
+    annealing = FALSE   # 0.0.4: these are the values of the original algorithm
   )
 
   expect_s3_class(fit, "zibr_saem")
@@ -231,4 +232,29 @@ test_that("fit_zibr validates dimensions and range of Y", {
     ),
     "same length"
   )
+})
+
+test_that("annealing in fit_zibr keeps each variance from falling faster than tau", {
+  dat <- simulate_zibr_data(
+    n_subjects = 20, n_time = 3,
+    alpha = c(-0.3, 0.5), beta = c(0.2, -0.4),
+    sigma_alpha = 0.4, sigma_beta = 0.3, phi = 15,
+    X = matrix(rep(c(0, 1), each = 3, length.out = 60)),
+    Z = matrix(rep(c(0, 1), each = 3, length.out = 60)), seed = 4
+  )
+  args <- list(y = dat$Y, id = dat$Subject, X = dat$X.1, Z = dat$Z.1,
+               phi_start = 10, alpha_start = c(-0.2, 0.1),
+               beta_start = c(0.1, 0.1), n_iter = 80, seed = 9,
+               compute_fim = FALSE)
+  fit <- do.call(fit_zibr, c(args, annealing = TRUE, annealing_tau = 0.9))
+  v <- fit$trace[, grep("^SIGMA", colnames(fit$trace)), drop = FALSE]
+  n_anneal <- floor(floor(0.75 * 80) / 2)
+  # From iteration 11 (first update of G) to the end of the annealing phase,
+  # no variance may drop below tau times its previous value.
+  ratio <- v[12:n_anneal, , drop = FALSE] / v[11:(n_anneal - 1), , drop = FALSE]
+  expect_true(all(ratio >= 0.9 - 1e-12))
+  expect_equal(unname(fit$annealing), c(0.9, n_anneal))
+  # Annealing is the default since 0.0.4; annealing = FALSE turns it off.
+  expect_false(is.null(do.call(fit_zibr, args)$annealing))
+  expect_null(do.call(fit_zibr, c(args, annealing = FALSE))$annealing)
 })
